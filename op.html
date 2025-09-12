@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synapse: AI-Powered Operations Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            color: #d1d5db;
+        }
+        .sidebar-icon {
+            transition: all 0.2s ease-in-out;
+        }
+        .sidebar-icon:hover {
+            background-color: #374151;
+            transform: scale(1.1);
+        }
+        .active-sidebar-icon {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .page {
+            display: none;
+            height: 100%;
+        }
+        .active-page {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .glass-card {
+            background: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+        .tab-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .active-tab-button {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .tab-content { display: none; }
+        .active-tab-content { display: block; }
+        .loader {
+            border: 4px solid #374151;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .chat-bubble { max-width: 80%; }
+        .user-bubble { background-color: #4f46e5; color: white; align-self: flex-end; }
+        .gemini-bubble { background-color: #374151; color: #d1d5db; align-self: flex-start; }
+        .modal {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.7);
+        }
+        .modal-content { margin: 10% auto; width: 90%; max-width: 600px; }
+        .hidden { display: none; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="glass-card p-8 rounded-lg w-full max-w-sm">
+            <h2 class="text-3xl font-bold text-white text-center mb-6">Đăng nhập</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                    <input type="email" id="email" name="email" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Mật khẩu</label>
+                    <input type="password" id="password" name="password" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition flex items-center justify-center">
+                    <span id="login-button-text">Đăng nhập</span>
+                    <div id="login-spinner" class="loader hidden"></div>
+                </button>
+                <p id="login-error" class="text-red-400 text-center mt-4 text-sm"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="flex w-full h-full hidden">
+        <aside class="w-20 bg-gray-900 p-4 flex flex-col items-center justify-between">
+            <div>
+                <div class="text-indigo-400 font-bold text-2xl mb-6">S</div>
+                <nav class="flex flex-col space-y-4">
+                    <button onclick="switchPage('agent')" class="sidebar-icon active-sidebar-icon p-3 rounded-xl" title="Workstream Agent"><i class="fa-solid fa-person-rays fa-fw text-xl"></i></button>
+                    <button onclick="switchPage('workforce')" class="sidebar-icon p-3 rounded-xl" title="Workforce Class"><i class="fa-solid fa-chalkboard-user fa-fw text-xl"></i></button>
+                    <button onclick="switchPage('intelligence')" class="sidebar-icon p-3 rounded-xl" title="Intelligence"><i class="fa-solid fa-brain fa-fw text-xl"></i></button>
+                </nav>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-8 overflow-y-auto relative">
+            <div id="user-info" class="absolute top-8 right-8 bg-gray-900 p-1 rounded-lg flex items-center space-x-3 text-sm z-20">
+                <span id="user-name-display" class="text-white font-semibold px-2"></span>
+                <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 rounded-md">Đăng xuất</button>
+            </div>
+
+            <!-- PAGES will be injected here -->
+            <div id="agent" class="page active-page"></div>
+            <div id="workforce" class="page"></div>
+            <div id="intelligence" class="page"></div>
+        </main>
+    </div>
+    
+    <!-- Modals -->
+    <div id="process-modal" class="modal"><div class="modal-content glass-card p-6"><h2 class="text-xl font-bold mb-4">Tạo Quy trình mới</h2><input class="w-full bg-gray-900 p-2 rounded mb-4" placeholder="Tên quy trình..."><button onclick="closeModal('process-modal')" class="bg-indigo-600 px-4 py-2 rounded">Lưu</button></div></div>
+    <div id="project-modal" class="modal"><div class="modal-content glass-card p-6"><h2 class="text-xl font-bold mb-4">Tạo Dự án mới</h2><input class="w-full bg-gray-900 p-2 rounded mb-2" placeholder="Tên dự án..."><input type="date" class="w-full bg-gray-900 p-2 rounded mb-4" value="2025-09-30"><button onclick="closeModal('project-modal')" class="bg-indigo-600 px-4 py-2 rounded">Lưu</button></div></div>
+    
+    <script>
+        const WEBHOOK_URL = 'https://aps.aibm.space/webhook/mid1';
+        const GEMINI_API_KEY = "AIzaSyA5A-vhRjC2QaQuMOlz40hYX7Ohn1AGXFU";
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+        
+        let currentUser = null;
+        let appData = null;
+        let uploadedImageBase64 = null;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const loggedInUser = sessionStorage.getItem('currentUser');
+            if (loggedInUser) {
+                currentUser = JSON.parse(loggedInUser);
+                initializeApp();
+            } else {
+                document.getElementById('login-modal').classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = e.target.email.value;
+            const pass = e.target.password.value;
+            const errorEl = document.getElementById('login-error');
+            const spinner = document.getElementById('login-spinner');
+            const buttonText = document.getElementById('login-button-text');
+            
+            spinner.classList.remove('hidden');
+            buttonText.classList.add('hidden');
+            errorEl.textContent = '';
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task: 'signin', email, pass })
+                });
+
+                if (!response.ok) throw new Error('Lỗi mạng hoặc server không phản hồi.');
+                
+                const responseData = await response.json();
+                
+                if (responseData && Array.isArray(responseData) && responseData.length > 0) {
+                    const userRecord = responseData[0];
+                    currentUser = {
+                        name: userRecord.Name,
+                        email: userRecord.email,
+                        role: userRecord.role.value,
+                        depart: userRecord.depart.value
+                    };
+                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    initializeApp();
+                } else {
+                    errorEl.textContent = 'Email hoặc mật khẩu không chính xác.';
+                }
+            } catch (err) {
+                console.error('Login failed:', err);
+                errorEl.textContent = 'Đã xảy ra lỗi khi đăng nhập.';
+            } finally {
+                spinner.classList.add('hidden');
+                buttonText.classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            sessionStorage.removeItem('currentUser');
+            currentUser = null;
+            appData = null;
+            location.reload();
+        });
+
+        async function initializeApp() {
+            document.getElementById('login-modal').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('user-name-display').textContent = `Chào, ${currentUser.name}`;
+
+            await fetchDataForRole();
+            
+            renderPageHTML();
+            updateUIVisibility();
+            renderAllContent();
+        }
+
+        async function fetchDataForRole() {
+            let payload = {};
+            switch(currentUser.role) {
+                case 'superadmin':
+                    payload = { task: 'getsuperadmin' };
+                    break;
+                case 'admin':
+                    payload = { task: 'getadmin', depart: currentUser.depart };
+                    break;
+                case 'mem':
+                    payload = { task: 'getmem', email: currentUser.email };
+                    break;
+            }
+
+            try {
+                console.log('Calling webhook with payload:', payload);
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error('Không thể tải dữ liệu cho vai trò của bạn.');
+                
+                appData = await response.json();
+                console.log('Received data for role:', appData);
+
+            } catch (err) {
+                console.error('Failed to fetch data for role:', err);
+                // Note: Using alert() might not work in some sandboxed environments. 
+                // Consider a custom modal for errors.
+                // alert(err.message); 
+                appData = {};
+            }
+        }
+
+        function updateUIVisibility() {
+            const intelligenceButton = document.querySelector('#app-container button[onclick*="intelligence"]');
+            if (!intelligenceButton) return;
+
+            if (currentUser.role === 'mem') {
+                intelligenceButton.style.display = 'none';
+                const currentPage = document.querySelector('.page.active-page');
+                if (currentPage && currentPage.id === 'intelligence') {
+                    switchPage('agent');
+                }
+            } else { 
+                intelligenceButton.style.display = 'flex';
+            }
+        }
+
+        function renderAllContent() {
+            if (!appData) {
+                console.log("No app data to render.");
+                return;
+            }
+
+            const syllabuses = (appData.class || []).map(c => ({ 
+                id: c.id, 
+                title: c.Name, 
+                content: c.HTML,
+                exercise: c.baitap
+            }));
+            renderSyllabusList(syllabuses);
+
+            if (currentUser.role !== 'mem') {
+                const transformedData = {
+                    dashboardStats: { standardized: (appData.process || []).length, projects: (appData.project || []).length, tasksSupported: (appData.projecttask || []).length + (appData.processcron || []).length },
+                    approvals: (appData.intel || []).map(i => ({ text: i.Name, type: i.type.value, color: { "Prompt": "indigo", "Process Cron": "cyan", "Class": "fuchsia", "Template": "lime", "Project Tool": "yellow" }[i.type.value] || 'gray' })),
+                    templates: {
+                        knowledge: (appData.temp || []).filter(t => t.type.value === 'knowledge').map(t => t.Name),
+                        docTemplate: (appData.temp || []).filter(t => t.type.value === 'doc temp').map(t => t.Name),
+                        toolUnit: (appData.toollist || []).map(t => t.Name)
+                    },
+                    automation: {
+                        processes: (appData.process || []).map(p => ({ title: p.Name, sublist: (p['process cron'] || []).map(c => c.value) })),
+                        projects: (appData.project || []).map(p => ({ title: p.Name, deadline: 'N/A', tasks: (p['project task'] || []).map(t => ({ text: t.value, checked: false })) }))
+                    },
+                    control: {
+                        prompts: (appData.prompt || []).map(p => ({ title: p.Name, content: p.Notes })),
+                        tools: (appData.toollist || []).map(t => ({ title: t.Name, description: 'Mô tả công cụ.', config: t.config || 'N/A' }))
+                    },
+                    users: appData.user || []
+                };
+                renderDashboard(transformedData.dashboardStats, transformedData.approvals);
+                renderTemplates(transformedData.templates);
+                renderAutomation(transformedData.automation);
+                renderControl(transformedData.control);
+                renderUsers(transformedData.users);
+            }
+        }
+        
+        function renderPageHTML() {
+            document.getElementById('agent').innerHTML = `<div class="h-full flex flex-col"> <div class="flex justify-between items-center mb-4 flex-shrink-0"> <h1 class="text-3xl font-bold text-white">Workstream Agent</h1> <button onclick="newConversation()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center space-x-2"><i class="fa-solid fa-plus"></i><span>Hội thoại mới</span></button> </div><div class="glass-card flex-grow p-4 flex flex-col"> <div id="chat-log" class="flex-grow overflow-y-auto p-4 space-y-4 flex flex-col"> <div class="chat-bubble gemini-bubble p-4 rounded-lg"><p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p></div></div><div class="mt-4 pt-4 border-t border-gray-700 flex-shrink-0"> <div id="image-preview-container" class="mb-2 hidden"><img id="image-preview" class="max-h-24 h-auto rounded-lg" /></div><div class="flex items-center bg-gray-900 rounded-lg p-2"> <textarea id="agent-prompt" class="flex-grow bg-transparent text-white focus:outline-none resize-none" rows="1" placeholder="Nhập yêu cầu..."></textarea> <label for="image-upload" class="cursor-pointer text-gray-400 hover:text-white p-2"><i class="fa-solid fa-paperclip text-xl"></i></label> <input id="image-upload" type="file" class="hidden" accept="image/*" onchange="handleImageUpload(event)"> <button id="agent-submit-btn" onclick="submitToGemini()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-2 rounded-lg ml-2"><i class="fa-solid fa-paper-plane"></i></button> </div></div></div></div>`;
+            document.getElementById('workforce').innerHTML = `<h1 class="text-3xl font-bold text-white mb-8">Workforce Class</h1> <div class="grid grid-cols-1 md:grid-cols-3 gap-8"> <div class="md-col-span-1 glass-card p-6"><h2 class="text-xl font-semibold text-white mb-4">Danh sách Đề cương</h2><ul id="syllabus-list" class="space-y-2"></ul></div><div id="syllabus-content" class="md-col-span-2 glass-card p-6 overflow-y-auto"></div></div>`;
+            if (currentUser.role !== 'mem') {
+                 document.getElementById('intelligence').innerHTML = `<h1 class="text-3xl font-bold text-white mb-8">Intel Hub</h1> <div class="mb-6 border-b border-gray-700"> <nav class="flex space-x-1 sm:space-x-4" aria-label="Tabs"> <button onclick="switchTab(event, 'db')" class="tab-button active-tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Dashboard</button> <button onclick="switchTab(event, 'knowledge')" class="tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Templates</button> <button onclick="switchTab(event, 'automation')" class="tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Automation</button> <button onclick="switchTab(event, 'control')" class="tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Agent Control</button> <button onclick="switchTab(event, 'users')" class="tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Users</button> </nav> </div><div id="db" class="tab-content active-tab-content"> <div id="dashboard-stats" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div><div class="glass-card p-6 mt-6"><h3 class="text-lg font-semibold text-white mb-4">Danh sách Đề xuất cần Duyệt</h3><div id="dashboard-approvals" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div></div></div><div id="knowledge" class="tab-content"><div id="templates-content" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div></div><div id="automation" class="tab-content"> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> <div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold text-white">Quản lý Quy trình</h3><button onclick="openModal('process-modal')" class="bg-indigo-600 p-2 rounded-lg text-sm">Tạo mới</button></div><ul id="automation-processes" class="space-y-2"></ul></div><div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold text-white">Project Manager</h3><button onclick="openModal('project-modal')" class="bg-indigo-600 p-2 rounded-lg text-sm">Tạo mới</button></div><ul id="automation-projects" class="space-y-2"></ul></div></div></div><div id="control" class="tab-content"> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> <div class="glass-card p-6"><h3 class="text-lg font-semibold text-white mb-4">Danh sách Prompt</h3><ul id="control-prompts" class="space-y-2"></ul></div><div class="glass-card p-6"><h3 class="text-lg font-semibold text-white mb-4">Tool List</h3><ul id="control-tools" class="space-y-2"></ul></div></div></div><div id="users" class="tab-content"> <div class="glass-card p-6"><h3 class="text-lg font-semibold text-white mb-4">Quản lý Người dùng</h3><table class="w-full text-left"><thead><tr class="border-b border-gray-700"><th class="py-2">Tên</th><th class="py-2">Email</th><th class="py-2">Vai trò</th><th class="py-2">Phòng ban</th><th class="py-2">Hành động</th></tr></thead><tbody id="users-table"></tbody></table></div></div>`;
+            } else {
+                 document.getElementById('intelligence').innerHTML = '';
+            }
+        }
+        function renderSyllabusList(syllabuses = []) { const listEl = document.getElementById('syllabus-list'); if(!listEl) return; listEl.innerHTML = syllabuses.map((s, index) => `<li><a href="#" data-syllabus-id="${s.id}" onclick="showSyllabus(event, ${s.id})" class="block p-3 rounded-lg ${index === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-indigo-600'}">${s.title}</a></li>`).join(''); if (syllabuses.length > 0) showSyllabus(null, syllabuses[0].id); else {listEl.innerHTML = ''; const contentEl = document.getElementById('syllabus-content'); if(contentEl) contentEl.innerHTML = '<p>Không có đề cương nào.</p>';} }
+        function renderDashboard(stats = {}, approvals = []) { const statsEl = document.getElementById('dashboard-stats'); if(!statsEl) return; statsEl.innerHTML = `<div class="glass-card p-6 text-center"><p class="text-gray-400">Quy trình đã Chuẩn hóa</p><p class="text-4xl font-bold text-green-400 mt-2">${stats.standardized || 0}</p></div><div class="glass-card p-6 text-center"><p class="text-gray-400">Dự án đang triển khai</p><p class="text-4xl font-bold text-cyan-400 mt-2">${stats.projects || 0}</p></div><div class="glass-card p-6 text-center"><p class="text-gray-400">Tổng số Task đã Hỗ trợ</p><p class="text-4xl font-bold text-yellow-400 mt-2">${stats.tasksSupported || 0}</p></div>`; const approvalsEl = document.getElementById('dashboard-approvals'); if(approvalsEl) approvalsEl.innerHTML = approvals.map(a => `<div class="bg-gray-800 p-4 rounded-lg flex flex-col justify-between"><p class="mb-3"><span class="font-bold text-${a.color}-400">[${a.type}]</span> ${a.text}</p><div class="self-end"><button class="bg-green-600 px-3 py-1 rounded text-sm">Duyệt</button><button class="bg-red-600 ml-2 px-3 py-1 rounded text-sm">Từ chối</button></div></div>`).join(''); }
+        function renderTemplates(templates = {}) { const templatesEl = document.getElementById('templates-content'); if(!templatesEl) return; const { knowledge = [], docTemplate = [], toolUnit = [] } = templates; templatesEl.innerHTML = `<div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h4 class="text-lg font-semibold text-white">Knowledge</h4><button class="bg-indigo-600 p-2 rounded-lg text-sm hover:bg-indigo-700"><i class="fa-solid fa-plus"></i></button></div><ul class="space-y-2">${knowledge.map(k => `<li class="bg-gray-800 p-3 rounded-lg">${k}</li>`).join('')}</ul></div><div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h4 class="text-lg font-semibold text-white">Doc Template</h4><button class="bg-indigo-600 p-2 rounded-lg text-sm hover:bg-indigo-700"><i class="fa-solid fa-plus"></i></button></div><ul class="space-y-2">${docTemplate.map(d => `<li class="bg-gray-800 p-3 rounded-lg">${d}</li>`).join('')}</ul></div><div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h4 class="text-lg font-semibold text-white">Cronjobs</h4><button class="bg-indigo-600 p-2 rounded-lg text-sm hover:bg-indigo-700"><i class="fa-solid fa-plus"></i></button></div><ul class="space-y-2">${toolUnit.map(t => `<li class="bg-gray-800 p-3 rounded-lg">${t}</li>`).join('')}</ul></div>`; }
+        function renderAutomation(automation = {}) { const { processes = [], projects = [] } = automation; const processesEl = document.getElementById('automation-processes'); if(processesEl) processesEl.innerHTML = processes.map(p => `<li class="bg-gray-800 p-2 rounded-lg cursor-pointer" onclick="toggleSublist(this)">${p.title}<ul class="sublist hidden mt-2 space-y-1 pl-4 text-sm">${(p.sublist || []).map(s => `<li class="bg-gray-900 p-1 rounded">${s}</li>`).join('')}</ul></li>`).join(''); const projectsEl = document.getElementById('automation-projects'); if(projectsEl) projectsEl.innerHTML = projects.map(p => `<li class="bg-gray-800 p-2 rounded-lg cursor-pointer" onclick="toggleSublist(this)"><div class="flex justify-between"><span>${p.title}</span> <span class="text-sm text-gray-400">Deadline: ${p.deadline}</span></div><ul class="sublist hidden mt-2 space-y-1 pl-4 text-sm">${(p.tasks || []).map(t => `<li class="bg-gray-900 p-1 rounded-lg flex items-center"><input type="checkbox" ${t.checked ? 'checked' : ''} class="mr-2 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500"> ${t.text}</li>`).join('')}</ul></li>`).join(''); }
+        function renderControl(control = {}) { const { prompts = [], tools = [] } = control; const promptsEl = document.getElementById('control-prompts'); if(!promptsEl) return; promptsEl.innerHTML = prompts.map(p => `<li class="bg-gray-800 p-2 rounded-lg cursor-pointer" onclick="toggleSublist(this)">${p.title}<div class="sublist hidden mt-2 p-2 bg-gray-900 rounded text-sm"><textarea class="w-full bg-gray-800 rounded p-2 h-32">${p.content}</textarea><button class="bg-indigo-600 px-3 py-1 rounded mt-2 text-xs">Lưu</button></div></li>`).join(''); const toolsEl = document.getElementById('control-tools'); if(toolsEl) toolsEl.innerHTML = tools.map(t => `<li class="bg-gray-800 p-2 rounded-lg cursor-pointer" onclick="toggleSublist(this)">${t.title}<div class="sublist hidden mt-2 p-2 bg-gray-900 rounded text-sm"><p>${t.description}</p><p class="mt-2 font-bold">Config: ${t.config}</p></div></li>`).join(''); }
+        function renderUsers(users = []) { const usersTable = document.getElementById('users-table'); if(!usersTable) return; if (!users || users.length === 0) { usersTable.innerHTML = `<tr><td colspan="5" class="text-gray-400 text-center py-4">Không có dữ liệu người dùng.</td></tr>`; return; } usersTable.innerHTML = users.map(u => `<tr class="border-b border-gray-800"><td class="py-3">${u.Name}</td><td class="py-3">${u.email || ''}</td><td class="py-3">${u.role.value}</td><td class="py-3">${u.depart.value}</td><td><button class="text-indigo-400">Sửa</button></td></tr>`).join(''); }
+        function switchPage(pageId) { if (currentUser.role === 'mem' && pageId === 'intelligence') return; document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(pageId)?.classList.add('active-page'); document.querySelectorAll('.sidebar-icon').forEach(b => { b.classList.remove('active-sidebar-icon'); if (b.getAttribute('onclick').includes(`'${pageId}'`)) b.classList.add('active-sidebar-icon'); }); if (pageId === 'intelligence') { switchTab({ currentTarget: document.querySelector('#intelligence .tab-button') }, 'db'); } }
+        function switchTab(event, tabId) { document.querySelectorAll('#intelligence .tab-content').forEach(tc => tc.classList.remove('active-tab-content')); document.querySelectorAll('#intelligence .tab-button').forEach(tb => tb.classList.remove('active-tab-button')); document.getElementById(tabId)?.classList.add('active-tab-content'); event.currentTarget?.classList.add('active-tab-button'); if (tabId === 'users') renderUsers(appData.user || []); }
+        
+        function showSyllabus(event, id) { 
+            if (event && event.preventDefault) event.preventDefault(); 
+            const syllabus = (appData.class || []).find(s => s.id === id); 
+            if (syllabus) { 
+                const contentEl = document.getElementById('syllabus-content'); 
+                if(contentEl) {
+                    let finalHTML = syllabus.HTML || '<p>Nội dung đang được cập nhật.</p>';
+                    if (syllabus.baitap) {
+                        finalHTML += `
+                            <hr class="my-6 border-gray-700">
+                            <h3 class="text-lg font-semibold text-white mb-4">Bài tập Nghiệm thu</h3>
+                            <div class="bg-gray-900 p-4 rounded-lg text-gray-300">
+                                <p>${syllabus.baitap}</p>
+                            </div>
+                        `;
+                    }
+                    contentEl.innerHTML = finalHTML;
+                } 
+            } 
+            document.querySelectorAll('#syllabus-list a').forEach(el => { el.classList.remove('bg-indigo-600', 'text-white'); el.classList.add('bg-gray-800', 'hover:bg-indigo-600'); }); 
+            const targetLink = document.querySelector(`#syllabus-list a[data-syllabus-id='${id}']`); 
+            if(targetLink) { targetLink.classList.remove('bg-gray-800', 'hover:bg-indigo-600'); targetLink.classList.add('bg-indigo-600', 'text-white'); } 
+        }
+
+        function newConversation() { document.querySelector('#chat-log').innerHTML = `<div class="chat-bubble gemini-bubble p-4 rounded-lg"><p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p></div>`; document.getElementById('agent-prompt').value = ''; resetImageUpload(); }
+        function handleImageUpload(event) { const file = event.target.files[0]; if (!file) { resetImageUpload(); return; }; const reader = new FileReader(); reader.onloadend = () => { uploadedImageBase64 = reader.result.replace('data:', '').replace(/^.+,/, ''); document.getElementById('image-preview').src = reader.result; document.getElementById('image-preview-container').classList.remove('hidden'); }; reader.readAsDataURL(file); }
+        function resetImageUpload() { const previewContainer = document.getElementById('image-preview-container'); if(previewContainer) { uploadedImageBase64 = null; document.getElementById('image-upload').value = ''; previewContainer.classList.add('hidden'); } }
+        async function submitToGemini() { const promptTextEl = document.getElementById('agent-prompt'); const promptText = promptTextEl ? promptTextEl.value : ''; const submitBtn = document.getElementById('agent-submit-btn'); if ((!promptText && !uploadedImageBase64) || !submitBtn) return; let userMessageHTML = `<div class="chat-bubble user-bubble p-4 rounded-lg">`; if (uploadedImageBase64) userMessageHTML += `<img src="${document.getElementById('image-preview').src}" class="max-w-xs h-auto rounded-md mb-2">`; if (promptText) userMessageHTML += `<p>${promptText}</p>`; userMessageHTML += `</div>`; const chatLogEl = document.querySelector('#chat-log'); if(!chatLogEl) return; chatLogEl.innerHTML += userMessageHTML; chatLogEl.scrollTop = chatLogEl.scrollHeight; if(promptTextEl) promptTextEl.value = ''; resetImageUpload(); submitBtn.disabled = true; chatLogEl.innerHTML += `<div id="loading-bubble" class="chat-bubble gemini-bubble p-4 rounded-lg"><div class="loader"></div></div>`; chatLogEl.scrollTop = chatLogEl.scrollHeight; const parts = []; if (promptText) parts.push({ text: promptText }); if (uploadedImageBase64) parts.push({ inlineData: { mimeType: "image/jpeg", data: uploadedImageBase64 } }); const payload = { contents: [{ parts: parts }] }; try { const response = await fetch(GEMINI_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error(`API call failed with status: ${response.status}`); const result = await response.json(); const candidate = result.candidates?.[0]; const loadingBubble = document.getElementById('loading-bubble'); if (candidate && candidate.content?.parts?.[0]?.text) { const geminiResponseHTML = `<div class="chat-bubble gemini-bubble p-4 rounded-lg">${candidate.content.parts[0].text.replace(/\n/g, '<br>')}</div>`; if(loadingBubble) loadingBubble.remove(); chatLogEl.innerHTML += geminiResponseHTML; } else { throw new Error("Invalid response structure from API."); } } catch (error) { console.error("Error calling Gemini API:", error); const errorHTML = `<div class="chat-bubble gemini-bubble p-4 rounded-lg text-red-400"><p>Lỗi: ${error.message}</p></div>`; const loadingBubble = document.getElementById('loading-bubble'); if(loadingBubble) loadingBubble.remove(); chatLogEl.innerHTML += errorHTML; } finally { submitBtn.disabled = false; chatLogEl.scrollTop = chatLogEl.scrollHeight; } }
+        function openModal(id) { const modal = document.getElementById(id); if(modal) modal.style.display = 'block'; }
+        function closeModal(id) { const modal = document.getElementById(id); if(modal) modal.style.display = 'none'; }
+        function toggleSublist(element) { const sublist = element.querySelector('.sublist'); if(sublist) sublist.classList.toggle('hidden'); }
+    </script>
+</body>
+</html>
+
+
+
