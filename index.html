@@ -1,364 +1,1049 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synapse: AI-Powered Operations Platform</title>
+    <title>Workstream Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        /* Custom styles */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #111827;
-            color: #d1d5db;
         }
-        .sidebar-icon {
-            transition: all 0.2s ease-in-out;
-        }
-        .sidebar-icon:hover {
-            background-color: #374151;
-            transform: scale(1.1);
-        }
-        .active-sidebar-icon {
-            background-color: #4f46e5;
-            color: white;
-        }
+        @import url('https://rsms.me/inter/inter.css');
+
         .page {
             display: none;
-            height: 100%;
         }
-        .active-page {
+        .page.active {
             display: block;
-            animation: fadeIn 0.5s ease-in-out;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .task-card {
+            cursor: move;
         }
-        .glass-card {
-            background: rgba(31, 41, 55, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
+        .kanban-column {
+            min-height: 200px;
         }
-        .tab-button {
-            transition: all 0.2s ease-in-out;
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        .active-tab-button {
-            background-color: #4f46e5;
-            color: white;
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
-        .tab-content { display: none; }
-        .active-tab-content { display: block; }
-        .loader {
-            border: 4px solid #374151;
-            border-top: 4px solid #6366f1;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .chat-bubble { max-width: 80%; }
-        .user-bubble { background-color: #4f46e5; color: white; align-self: flex-end; }
-        .gemini-bubble { background-color: #374151; color: #d1d5db; align-self: flex-start; }
-        .modal {
-            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
-            overflow: auto; background-color: rgba(0,0,0,0.7);
-        }
-        .modal-content { margin: 10% auto; width: 90%; max-width: 600px; }
-        .hidden { display: none; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
     </style>
 </head>
-<body class="h-screen overflow-hidden">
+<body class="bg-gray-100 text-gray-800">
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
-        <div class="glass-card p-8 rounded-lg w-full max-w-sm">
-            <h2 class="text-3xl font-bold text-white text-center mb-6">Đăng nhập</h2>
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-sm">
+            <div class="flex items-center justify-center mb-6">
+                <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H3a4 4 0 00-4 4v2m11-6V5a4 4 0 00-4-4H6a4 4 0 00-4 4v6m18 4v-2a4 4 0 00-4-4h-2a4 4 0 00-4 4v2m11-6V9a4 4 0 00-4-4h-2a4 4 0 00-4 4v2"></path></svg>
+                <h1 class="text-2xl font-bold ml-2 text-gray-800">Workstream</h1>
+            </div>
+            <h2 class="text-xl font-semibold text-center text-gray-700 mb-4">Đăng nhập</h2>
             <form id="login-form">
                 <div class="mb-4">
-                    <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
-                    <input type="email" id="email" name="email" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <label for="email" class="block text-sm font-medium text-gray-600 mb-2">Email</label>
+                    <input type="email" id="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" value="superadmin@example.com" required>
                 </div>
                 <div class="mb-6">
-                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Mật khẩu</label>
-                    <input type="password" id="password" name="password" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <label for="password" class="block text-sm font-medium text-gray-600 mb-2">Mật khẩu</label>
+                    <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" value="123" required>
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition flex items-center justify-center">
-                    <span id="login-button-text">Đăng nhập</span>
-                    <div id="login-spinner" class="loader hidden"></div>
+                <div id="login-error" class="text-red-500 text-sm mb-4 text-center h-5"></div>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition transform hover:scale-105 flex items-center justify-center h-10">
+                    Đăng nhập
                 </button>
-                <p id="login-error" class="text-red-400 text-center mt-4 text-sm"></p>
             </form>
+             <div class="mt-6">
+                <details class="bg-gray-50 rounded-lg p-3">
+                    <summary class="font-semibold text-sm cursor-pointer text-gray-600">Tài khoản demo (mật khẩu: 123)</summary>
+                    <ul class="text-xs text-gray-500 mt-2 space-y-1 pl-2">
+                        <li><b>Superadmin:</b> superadmin@example.com</li>
+                        <li><b>Admin MKT:</b> admin.mkt@example.com</li>
+                        <li><b>User MKT 1:</b> user1.mkt@example.com</li>
+                        <li><b>User MKT 2:</b> user2.mkt@example.com</li>
+                        <li><b>Admin Tech:</b> admin.tech@example.com</li>
+                        <li><b>User Tech 1:</b> user1.tech@example.com</li>
+                        <li><b>User Tech 2:</b> user2.tech@example.com</li>
+                    </ul>
+                </details>
+            </div>
         </div>
     </div>
 
-    <!-- Main App Container -->
-    <div id="app-container" class="flex w-full h-full hidden">
-        <aside class="w-20 bg-gray-900 p-4 flex flex-col items-center justify-between">
-            <div>
-                <div class="text-indigo-400 font-bold text-2xl mb-6">S</div>
-                <nav class="flex flex-col space-y-4">
-                    <button onclick="switchPage('agent')" class="sidebar-icon active-sidebar-icon p-3 rounded-xl" title="Workstream Agent"><i class="fa-solid fa-person-rays fa-fw text-xl"></i></button>
-                    <button onclick="switchPage('workforce')" class="sidebar-icon p-3 rounded-xl" title="Workforce Class"><i class="fa-solid fa-chalkboard-user fa-fw text-xl"></i></button>
-                    <button onclick="switchPage('intelligence')" class="sidebar-icon p-3 rounded-xl" title="Intelligence"><i class="fa-solid fa-brain fa-fw text-xl"></i></button>
-                </nav>
+    <!-- Main App -->
+    <div id="app" class="hidden h-screen flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 bg-gray-800 text-white flex flex-col transition-all duration-300">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                 <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H3a4 4 0 00-4 4v2m11-6V5a4 4 0 00-4-4H6a4 4 0 00-4 4v6m18 4v-2a4 4 0 00-4-4h-2a4 4 0 00-4 4v2m11-6V9a4 4 0 00-4-4h-2a4 4 0 00-4 4v2"></path></svg>
+                <h1 class="text-2xl font-bold ml-2">Workstream</h1>
+            </div>
+            <nav id="main-nav" class="flex-1 px-4 py-4 space-y-2">
+                <!-- Nav items will be populated by JS -->
+            </nav>
+            <div id="user-profile" class="p-4 border-t border-gray-700">
+                <!-- User info will be populated by JS -->
             </div>
         </aside>
 
-        <main class="flex-1 p-8 overflow-y-auto relative">
-            <div id="user-info" class="absolute top-8 right-8 bg-gray-900 p-1 rounded-lg flex items-center space-x-3 text-sm z-20">
-                <span id="user-name-display" class="text-white font-semibold px-2"></span>
-                <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 rounded-md">Đăng xuất</button>
-            </div>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="h-20 bg-white shadow-md flex items-center justify-between px-6">
+                <h2 id="page-title" class="text-2xl font-bold text-gray-700"></h2>
+                <button id="logout-button" class="flex items-center text-sm font-medium text-gray-600 hover:text-indigo-600">
+                    <i data-lucide="log-out" class="w-5 h-5 mr-2"></i>
+                    Đăng xuất
+                </button>
+            </header>
+            <div id="content-area" class="flex-1 p-6 overflow-y-auto bg-gray-100">
 
-            <!-- PAGES will be injected here -->
-            <div id="agent" class="page active-page"></div>
-            <div id="workforce" class="page"></div>
-            <div id="intelligence" class="page"></div>
+                <!-- Chatbot Page -->
+                <div id="chatbot-page" class="page h-full">
+                    <div class="h-full flex flex-col bg-white rounded-lg shadow-lg">
+                        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto">
+                            <!-- Chat messages -->
+                             <div class="flex items-start mb-4">
+                                <div class="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">AI</div>
+                                <div class="bg-gray-200 p-3 rounded-lg max-w-md">
+                                    <p class="text-sm">Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>
+                                </div>
+                            </div>
+                             <div class="flex items-start justify-end mb-4">
+                                <div class="bg-indigo-500 text-white p-3 rounded-lg max-w-md">
+                                    <p class="text-sm">Tôi cần thông tin về dự án "Website Redesign".</p>
+                                </div>
+                                 <div id="current-user-avatar-chat" class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold ml-4 shrink-0"></div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t">
+                            <div class="flex items-center bg-gray-100 rounded-lg">
+                                <input type="text" id="chat-input" placeholder="Nhập tin nhắn của bạn..." class="w-full bg-transparent p-3 focus:outline-none">
+                                <button id="send-chat-button" class="p-3 text-indigo-500 hover:text-indigo-700">
+                                    <i data-lucide="send" class="w-6 h-6"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Class Page -->
+                <div id="class-page" class="page">
+                    <div class="space-y-6" id="class-content">
+                        <!-- Class content will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Tasklist Page -->
+                <div id="tasklist-page" class="page">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- To Do -->
+                        <div id="todo-col" class="bg-white rounded-lg shadow-lg">
+                            <h3 class="text-lg font-bold p-4 border-b flex items-center justify-between">
+                                <span class="flex items-center"><i data-lucide="list" class="w-5 h-5 mr-2 text-red-500"></i>To Do</span>
+                                <span id="todo-count" class="bg-red-100 text-red-700 text-sm font-semibold px-2 py-1 rounded-full"></span>
+                            </h3>
+                            <div id="todo-tasks" class="p-4 space-y-4 kanban-column"></div>
+                        </div>
+                        <!-- In Progress -->
+                        <div id="inprogress-col" class="bg-white rounded-lg shadow-lg">
+                            <h3 class="text-lg font-bold p-4 border-b flex items-center justify-between">
+                                <span class="flex items-center"><i data-lucide="loader-2" class="w-5 h-5 mr-2 text-yellow-500 animate-spin"></i>In Progress</span>
+                                <span id="inprogress-count" class="bg-yellow-100 text-yellow-700 text-sm font-semibold px-2 py-1 rounded-full"></span>
+                            </h3>
+                            <div id="inprogress-tasks" class="p-4 space-y-4 kanban-column"></div>
+                        </div>
+                        <!-- Done -->
+                        <div id="done-col" class="bg-white rounded-lg shadow-lg">
+                             <h3 class="text-lg font-bold p-4 border-b flex items-center justify-between">
+                                <span class="flex items-center"><i data-lucide="check-circle-2" class="w-5 h-5 mr-2 text-green-500"></i>Done</span>
+                                <span id="done-count" class="bg-green-100 text-green-700 text-sm font-semibold px-2 py-1 rounded-full"></span>
+                            </h3>
+                            <div id="done-tasks" class="p-4 space-y-4 kanban-column"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Page -->
+                <div id="project-page" class="page">
+                    <div id="project-list-view">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="project-folders">
+                            <!-- Project folders will be populated here -->
+                        </div>
+                    </div>
+                    <div id="project-detail-view" class="hidden">
+                        <!-- Project detail will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Management Page (Admin/Superadmin) -->
+                <div id="management-page" class="page">
+                    <div class="bg-white rounded-lg shadow-lg">
+                        <div class="border-b border-gray-200">
+                            <nav id="management-tabs" class="-mb-px flex space-x-6 px-6" aria-label="Tabs">
+                                <!-- Management tabs will be populated here -->
+                            </nav>
+                        </div>
+                        <div class="p-6">
+                            <div id="management-content">
+                                <!-- Management tab content will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </main>
     </div>
-    
-    <!-- Modals -->
-    <div id="process-modal" class="modal"><div class="modal-content glass-card p-6"><h2 class="text-xl font-bold mb-4">Tạo Quy trình mới</h2><input class="w-full bg-gray-900 p-2 rounded mb-4" placeholder="Tên quy trình..."><button onclick="closeModal('process-modal')" class="bg-indigo-600 px-4 py-2 rounded">Lưu</button></div></div>
-    <div id="project-modal" class="modal"><div class="modal-content glass-card p-6"><h2 class="text-xl font-bold mb-4">Tạo Dự án mới</h2><input class="w-full bg-gray-900 p-2 rounded mb-2" placeholder="Tên dự án..."><input type="date" class="w-full bg-gray-900 p-2 rounded mb-4" value="2025-09-30"><button onclick="closeModal('project-modal')" class="bg-indigo-600 px-4 py-2 rounded">Lưu</button></div></div>
-    
+
     <script>
-        const WEBHOOK_URL = 'https://aps.aibm.space/webhook/mid1';
-        const GEMINI_API_KEY = "AIzaSyA5A-vhRjC2QaQuMOlz40hYX7Ohn1AGXFU";
-        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
-        
-        let currentUser = null;
-        let appData = null;
-        let uploadedImageBase64 = null;
-        
         document.addEventListener('DOMContentLoaded', () => {
-            const loggedInUser = sessionStorage.getItem('currentUser');
-            if (loggedInUser) {
-                currentUser = JSON.parse(loggedInUser);
-                initializeApp();
-            } else {
-                document.getElementById('login-modal').classList.remove('hidden');
-            }
-        });
+            // --- DATABASE & API CONFIG ---
+            const baserowConfig = {
+                host: 'https://aibm.store',
+                databaseToken: 'ITGsOdAqUfoPrqKzsxgyCyHS6U6o9Yhk',
+                tableIds: {
+                    users: '895',
+                    projects: '896',
+                    tasks: '899',
+                    classes: '900',
+                    documents: '897',
+                    prompts: '901'
+                }
+            };
 
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = e.target.email.value;
-            const pass = e.target.password.value;
-            const errorEl = document.getElementById('login-error');
-            const spinner = document.getElementById('login-spinner');
-            const buttonText = document.getElementById('login-button-text');
+            // --- APP STATE ---
+            let appState = {
+                currentUser: null,
+                currentPage: null,
+                draggedTask: null,
+                createdProjects: [], // For admin project creation flow
+                // Live data from Baserow will be stored here
+                data: {
+                    users: [],
+                    projects: [],
+                    tasks: [],
+                    classes: [],
+                    prompts: []
+                },
+                threadId: null // Add threadId to appState
+            };
+
+            // --- DOM ELEMENTS ---
+            const loginScreen = document.getElementById('login-screen');
+            const appScreen = document.getElementById('app');
+            const loginForm = document.getElementById('login-form');
+            const mainNav = document.getElementById('main-nav');
+            const userProfile = document.getElementById('user-profile');
+            const pageTitle = document.getElementById('page-title');
+            const logoutButton = document.getElementById('logout-button');
             
-            spinner.classList.remove('hidden');
-            buttonText.classList.add('hidden');
-            errorEl.textContent = '';
-
-            try {
-                const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ task: 'signin', email, pass })
+            // --- INITIALIZATION ---
+            function init() {
+                loginForm.addEventListener('submit', handleLogin);
+                logoutButton.addEventListener('click', handleLogout);
+                document.getElementById('send-chat-button').addEventListener('click', handleSendMessage);
+                document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') handleSendMessage();
                 });
 
-                if (!response.ok) throw new Error('Lỗi mạng hoặc server không phản hồi.');
-                
-                const responseData = await response.json();
-                
-                if (responseData && Array.isArray(responseData) && responseData.length > 0) {
-                    const userRecord = responseData[0];
-                    currentUser = {
-                        name: userRecord.Name,
-                        email: userRecord.email,
-                        role: userRecord.role.value,
-                        depart: userRecord.depart.value
-                    };
-                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    initializeApp();
-                } else {
-                    errorEl.textContent = 'Email hoặc mật khẩu không chính xác.';
-                }
-            } catch (err) {
-                console.error('Login failed:', err);
-                errorEl.textContent = 'Đã xảy ra lỗi khi đăng nhập.';
-            } finally {
-                spinner.classList.add('hidden');
-                buttonText.classList.remove('hidden');
-            }
-        });
+                // --- EVENT DELEGATION FOR DYNAMIC CONTENT (DEFINITIVE FIX) ---
+                // This single, powerful listener is attached to the whole document body.
+                // It will catch clicks on any syllabus or user item, no matter when they are created or re-rendered.
+                // This is the correct and final solution.
+                document.body.addEventListener('click', (e) => {
+                    // For Class Page syllabus items
+                    const syllabusHeader = e.target.closest('.syllabus-header');
+                    if (syllabusHeader) {
+                        e.preventDefault();
+                        const assignmentsContainer = syllabusHeader.nextElementSibling;
+                        const icon = syllabusHeader.querySelector('.chevron-icon'); // SỬA: Tìm icon bằng class cố định
+                        if (assignmentsContainer && icon) {
+                            assignmentsContainer.classList.toggle('hidden');
+                            icon.classList.toggle('rotate-180');
+                        }
+                        return;
+                    }
 
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            sessionStorage.removeItem('currentUser');
-            currentUser = null;
-            appData = null;
-            location.reload();
-        });
-
-        async function initializeApp() {
-            document.getElementById('login-modal').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
-            document.getElementById('user-name-display').textContent = `Chào, ${currentUser.name}`;
-
-            await fetchDataForRole();
-            
-            renderPageHTML();
-            updateUIVisibility();
-            renderAllContent();
-        }
-
-        async function fetchDataForRole() {
-            let payload = {};
-            switch(currentUser.role) {
-                case 'superadmin':
-                    payload = { task: 'getsuperadmin' };
-                    break;
-                case 'admin':
-                    payload = { task: 'getadmin', depart: currentUser.depart };
-                    break;
-                case 'mem':
-                    payload = { task: 'getmem', email: currentUser.email };
-                    break;
-            }
-
-            try {
-                console.log('Calling webhook with payload:', payload);
-                const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    // For Management > User & Class items
+                    const userItemHeader = e.target.closest('.user-item-header');
+                    if (userItemHeader) {
+                        e.preventDefault();
+                        const classListDiv = userItemHeader.nextElementSibling;
+                        const icon = userItemHeader.querySelector('.chevron-icon'); // SỬA: Tìm icon bằng class cố định
+                        if (classListDiv && icon) {
+                            classListDiv.classList.toggle('hidden');
+                            icon.classList.toggle('rotate-180');
+                        }
+                        return;
+                    }
                 });
-                if (!response.ok) throw new Error('Không thể tải dữ liệu cho vai trò của bạn.');
-                
-                appData = await response.json();
-                console.log('Received data for role:', appData);
 
-            } catch (err) {
-                console.error('Failed to fetch data for role:', err);
-                // Note: Using alert() might not work in some sandboxed environments. 
-                // Consider a custom modal for errors.
-                // alert(err.message); 
-                appData = {};
+
+                lucide.createIcons();
             }
-        }
+            
+            // --- AUTHENTICATION ---
+            async function handleLogin(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const errorDiv = document.getElementById('login-error');
+                const loginButton = e.target.querySelector('button[type="submit"]');
 
-        function updateUIVisibility() {
-            const intelligenceButton = document.querySelector('#app-container button[onclick*="intelligence"]');
-            if (!intelligenceButton) return;
+                errorDiv.textContent = '';
+                loginButton.disabled = true;
+                loginButton.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Đang xác thực...</span>`;
 
-            if (currentUser.role === 'mem') {
-                intelligenceButton.style.display = 'none';
-                const currentPage = document.querySelector('.page.active-page');
-                if (currentPage && currentPage.id === 'intelligence') {
-                    switchPage('agent');
+                const apiUrl = `${baserowConfig.host}/api/database/rows/table/${baserowConfig.tableIds.users}/?user_field_names=true`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: { 'Authorization': `Token ${baserowConfig.databaseToken}` }
+                    });
+
+                    if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+                    
+                    const data = await response.json();
+                    const usersFromApi = data.results;
+
+                    // Map raw user data to a consistent format
+                    const allUsers = usersFromApi.map(u => ({
+                        id: u.id,
+                        name: u.name,
+                        role: u.role,
+                        department: u.depart,
+                        avatar: u.name ? u.name.split(' ').map(n => n[0]).join('') : '?',
+                        email: u.email,
+                        password: u.pass,
+                        projects: u.project.map(p => p.id),
+                        classes: u.class.map(c => c.id)
+                    }));
+                    appState.data.users = allUsers;
+
+                    const foundUser = allUsers.find(u => u.email === email && u.password === password);
+                    
+                    if (foundUser) {
+                        appState.currentUser = foundUser;
+                        loginButton.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Đang tải dữ liệu...</span>`;
+                        await fetchAllAppData(); // Fetch all other data after successful login
+                        
+                        loginScreen.style.display = 'none';
+                        appScreen.classList.remove('hidden');
+                        setupUIForUser();
+                        navigateTo('chatbot');
+                    } else {
+                        errorDiv.textContent = 'Email hoặc mật khẩu không đúng.';
+                    }
+
+                } catch (error) {
+                    console.error('Login Error:', error);
+                    errorDiv.textContent = 'Không thể kết nối đến máy chủ xác thực.';
+                } finally {
+                    loginButton.disabled = false;
+                    loginButton.innerHTML = 'Đăng nhập';
                 }
-            } else { 
-                intelligenceButton.style.display = 'flex';
-            }
-        }
-
-        function renderAllContent() {
-            if (!appData) {
-                console.log("No app data to render.");
-                return;
             }
 
-            const syllabuses = (appData.class || []).map(c => ({ 
-                id: c.id, 
-                title: c.Name, 
-                content: c.HTML,
-                exercise: c.baitap
-            }));
-            renderSyllabusList(syllabuses);
+            async function fetchAllAppData() {
+                const { host, databaseToken, tableIds } = baserowConfig;
+                const headers = { 'Authorization': `Token ${databaseToken}` };
 
-            if (currentUser.role !== 'mem') {
-                const transformedData = {
-                    dashboardStats: { standardized: (appData.process || []).length, projects: (appData.project || []).length, tasksSupported: (appData.projecttask || []).length + (appData.processcron || []).length },
-                    approvals: (appData.intel || []).map(i => ({ text: i.Name, type: i.type.value, color: { "Prompt": "indigo", "Process Cron": "cyan", "Class": "fuchsia", "Template": "lime", "Project Tool": "yellow" }[i.type.value] || 'gray' })),
-                    templates: {
-                        knowledge: (appData.temp || []).filter(t => t.type.value === 'knowledge').map(t => t.Name),
-                        docTemplate: (appData.temp || []).filter(t => t.type.value === 'doc temp').map(t => t.Name),
-                        toolUnit: (appData.toollist || []).map(t => t.Name)
-                    },
-                    automation: {
-                        processes: (appData.process || []).map(p => ({ title: p.Name, sublist: (p['process cron'] || []).map(c => c.value) })),
-                        projects: (appData.project || []).map(p => ({ title: p.Name, deadline: 'N/A', tasks: (p['project task'] || []).map(t => ({ text: t.value, checked: false })) }))
-                    },
-                    control: {
-                        prompts: (appData.prompt || []).map(p => ({ title: p.Name, content: p.Notes })),
-                        tools: (appData.toollist || []).map(t => ({ title: t.Name, description: 'Mô tả công cụ.', config: t.config || 'N/A' }))
-                    },
-                    users: appData.user || []
+                // Helper to fetch and parse a table
+                const fetchTable = async (tableId) => {
+                    const response = await fetch(`${host}/api/database/rows/table/${tableId}/?user_field_names=true&size=200`, { headers });
+                    if (!response.ok) throw new Error(`Failed to fetch table ${tableId}`);
+                    const data = await response.json();
+                    return data.results;
                 };
-                renderDashboard(transformedData.dashboardStats, transformedData.approvals);
-                renderTemplates(transformedData.templates);
-                renderAutomation(transformedData.automation);
-                renderControl(transformedData.control);
-                renderUsers(transformedData.users);
+
+                try {
+                    const [projectsRaw, tasksRaw, classesRaw, promptsRaw] = await Promise.all([
+                        fetchTable(tableIds.projects),
+                        fetchTable(tableIds.tasks),
+                        fetchTable(tableIds.classes),
+                        fetchTable(tableIds.prompts)
+                    ]);
+                    
+                    // Map Project Data
+                    appState.data.projects = projectsRaw.map(p => ({
+                        id: p.id,
+                        name: p.Name,
+                        docs: p.document.map(d => d.value),
+                        // Find all users who are members of this project
+                        members: appState.data.users.filter(u => u.projects.includes(p.id)).map(u => u.id)
+                    }));
+
+                    // Map Task Data
+                    appState.data.tasks = tasksRaw.map(t => {
+                        let status = 'todo'; // default status
+                        if (t.status === 'On Going') status = 'inprogress';
+                        else if (t.status === 'Done') status = 'done';
+                        
+                        return {
+                            id: t.id,
+                            title: t.Name,
+                            status: status,
+                            projectId: t.project.length > 0 ? t.project[0].id : null,
+                            assignedTo: t['assign to'].length > 0 ? t['assign to'][0].id : null
+                        }
+                    }).filter(t => ['todo', 'inprogress', 'done'].includes(t.status)); // Only include tasks for the Kanban board
+
+                    // Map and Group Class Data
+                    const groupedClasses = classesRaw.reduce((acc, c) => {
+                        const userId = c['assign to'].length > 0 ? c['assign to'][0].id : null;
+                        if (!userId) return acc;
+                        
+                        // Use a composite key to handle cases where a user might be in multiple distinct classes
+                        const classKey = `${userId}-${c.Name}`; 
+
+                        if (!acc[classKey]) {
+                            acc[classKey] = {
+                                id: c.id, // Use the ID of the first entry as the main ID
+                                name: c.Name,
+                                userId: userId,
+                                syllabus: []
+                            };
+                        }
+                        // Each row in Baserow is treated as a syllabus item
+                        acc[classKey].syllabus.push({
+                            id: `s-${c.id}`,
+                            title: c.Syllabus,
+                            assignments: [{
+                                id: `a-${c.id}`,
+                                title: c.Assignments,
+                                suggestion: 'Đề xuất từ AI sẽ được cập nhật sau.'
+                            }]
+                        });
+                        return acc;
+                    }, {});
+                    appState.data.classes = Object.values(groupedClasses);
+
+                    // Map Prompts Data
+                    appState.data.prompts = promptsRaw.map(p => ({
+                        id: p.id,
+                        prompt: p.Prompt,
+                        department: p.depart,
+                        type: p.type,
+                        status: p.status
+                    }));
+
+                } catch (error) {
+                    console.error("Error fetching app data:", error);
+                    document.getElementById('login-error').textContent = 'Lỗi khi tải dữ liệu ứng dụng.';
+                    // Optionally, you can log out the user here
+                    handleLogout();
+                }
             }
-        }
-        
-        function renderPageHTML() {
-            document.getElementById('agent').innerHTML = `<div class="h-full flex flex-col"> <div class="flex justify-between items-center mb-4 flex-shrink-0"> <h1 class="text-3xl font-bold text-white">Workstream Agent</h1> <button onclick="newConversation()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center space-x-2"><i class="fa-solid fa-plus"></i><span>Hội thoại mới</span></button> </div><div class="glass-card flex-grow p-4 flex flex-col"> <div id="chat-log" class="flex-grow overflow-y-auto p-4 space-y-4 flex flex-col"> <div class="chat-bubble gemini-bubble p-4 rounded-lg"><p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p></div></div><div class="mt-4 pt-4 border-t border-gray-700 flex-shrink-0"> <div id="image-preview-container" class="mb-2 hidden"><img id="image-preview" class="max-h-24 h-auto rounded-lg" /></div><div class="flex items-center bg-gray-900 rounded-lg p-2"> <textarea id="agent-prompt" class="flex-grow bg-transparent text-white focus:outline-none resize-none" rows="1" placeholder="Nhập yêu cầu..."></textarea> <label for="image-upload" class="cursor-pointer text-gray-400 hover:text-white p-2"><i class="fa-solid fa-paperclip text-xl"></i></label> <input id="image-upload" type="file" class="hidden" accept="image/*" onchange="handleImageUpload(event)"> <button id="agent-submit-btn" onclick="submitToGemini()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-2 rounded-lg ml-2"><i class="fa-solid fa-paper-plane"></i></button> </div></div></div></div>`;
-            document.getElementById('workforce').innerHTML = `<h1 class="text-3xl font-bold text-white mb-8">Workforce Class</h1> <div class="grid grid-cols-1 md:grid-cols-3 gap-8"> <div class="md-col-span-1 glass-card p-6"><h2 class="text-xl font-semibold text-white mb-4">Danh sách Đề cương</h2><ul id="syllabus-list" class="space-y-2"></ul></div><div id="syllabus-content" class="md-col-span-2 glass-card p-6 overflow-y-auto"></div></div>`;
-            if (currentUser.role !== 'mem') {
-                 document.getElementById('intelligence').innerHTML = `<h1 class="text-3xl font-bold text-white mb-8">Intel Hub</h1> <div class="mb-6 border-b border-gray-700"> <nav class="flex space-x-1 sm:space-x-4" aria-label="Tabs"> <button onclick="switchTab(event, 'db')" class="tab-button active-tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Dashboard</button> <button onclick="switchTab(event, 'knowledge')" class="tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Templates</button> <button onclick="switchTab(event, 'automation')" class="tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Automation</button> <button onclick="switchTab(event, 'control')" class="tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Agent Control</button> <button onclick="switchTab(event, 'users')" class="tab-button px-3 py-2 text-sm font-medium rounded-t-lg">Users</button> </nav> </div><div id="db" class="tab-content active-tab-content"> <div id="dashboard-stats" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div><div class="glass-card p-6 mt-6"><h3 class="text-lg font-semibold text-white mb-4">Danh sách Đề xuất cần Duyệt</h3><div id="dashboard-approvals" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div></div></div><div id="knowledge" class="tab-content"><div id="templates-content" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div></div><div id="automation" class="tab-content"> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> <div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold text-white">Quản lý Quy trình</h3><button onclick="openModal('process-modal')" class="bg-indigo-600 p-2 rounded-lg text-sm">Tạo mới</button></div><ul id="automation-processes" class="space-y-2"></ul></div><div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold text-white">Project Manager</h3><button onclick="openModal('project-modal')" class="bg-indigo-600 p-2 rounded-lg text-sm">Tạo mới</button></div><ul id="automation-projects" class="space-y-2"></ul></div></div></div><div id="control" class="tab-content"> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> <div class="glass-card p-6"><h3 class="text-lg font-semibold text-white mb-4">Danh sách Prompt</h3><ul id="control-prompts" class="space-y-2"></ul></div><div class="glass-card p-6"><h3 class="text-lg font-semibold text-white mb-4">Tool List</h3><ul id="control-tools" class="space-y-2"></ul></div></div></div><div id="users" class="tab-content"> <div class="glass-card p-6"><h3 class="text-lg font-semibold text-white mb-4">Quản lý Người dùng</h3><table class="w-full text-left"><thead><tr class="border-b border-gray-700"><th class="py-2">Tên</th><th class="py-2">Email</th><th class="py-2">Vai trò</th><th class="py-2">Phòng ban</th><th class="py-2">Hành động</th></tr></thead><tbody id="users-table"></tbody></table></div></div>`;
-            } else {
-                 document.getElementById('intelligence').innerHTML = '';
+            
+            function handleLogout() {
+                appState.currentUser = null;
+                appScreen.classList.add('hidden');
+                loginScreen.style.display = 'flex';
+                mainNav.innerHTML = '';
+                userProfile.innerHTML = '';
+                document.getElementById('login-form').reset();
+                document.getElementById('login-error').textContent = '';
             }
-        }
-        function renderSyllabusList(syllabuses = []) { const listEl = document.getElementById('syllabus-list'); if(!listEl) return; listEl.innerHTML = syllabuses.map((s, index) => `<li><a href="#" data-syllabus-id="${s.id}" onclick="showSyllabus(event, ${s.id})" class="block p-3 rounded-lg ${index === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-800 hover:bg-indigo-600'}">${s.title}</a></li>`).join(''); if (syllabuses.length > 0) showSyllabus(null, syllabuses[0].id); else {listEl.innerHTML = ''; const contentEl = document.getElementById('syllabus-content'); if(contentEl) contentEl.innerHTML = '<p>Không có đề cương nào.</p>';} }
-        function renderDashboard(stats = {}, approvals = []) { const statsEl = document.getElementById('dashboard-stats'); if(!statsEl) return; statsEl.innerHTML = `<div class="glass-card p-6 text-center"><p class="text-gray-400">Quy trình đã Chuẩn hóa</p><p class="text-4xl font-bold text-green-400 mt-2">${stats.standardized || 0}</p></div><div class="glass-card p-6 text-center"><p class="text-gray-400">Dự án đang triển khai</p><p class="text-4xl font-bold text-cyan-400 mt-2">${stats.projects || 0}</p></div><div class="glass-card p-6 text-center"><p class="text-gray-400">Tổng số Task đã Hỗ trợ</p><p class="text-4xl font-bold text-yellow-400 mt-2">${stats.tasksSupported || 0}</p></div>`; const approvalsEl = document.getElementById('dashboard-approvals'); if(approvalsEl) approvalsEl.innerHTML = approvals.map(a => `<div class="bg-gray-800 p-4 rounded-lg flex flex-col justify-between"><p class="mb-3"><span class="font-bold text-${a.color}-400">[${a.type}]</span> ${a.text}</p><div class="self-end"><button class="bg-green-600 px-3 py-1 rounded text-sm">Duyệt</button><button class="bg-red-600 ml-2 px-3 py-1 rounded text-sm">Từ chối</button></div></div>`).join(''); }
-        function renderTemplates(templates = {}) { const templatesEl = document.getElementById('templates-content'); if(!templatesEl) return; const { knowledge = [], docTemplate = [], toolUnit = [] } = templates; templatesEl.innerHTML = `<div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h4 class="text-lg font-semibold text-white">Knowledge</h4><button class="bg-indigo-600 p-2 rounded-lg text-sm hover:bg-indigo-700"><i class="fa-solid fa-plus"></i></button></div><ul class="space-y-2">${knowledge.map(k => `<li class="bg-gray-800 p-3 rounded-lg">${k}</li>`).join('')}</ul></div><div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h4 class="text-lg font-semibold text-white">Doc Template</h4><button class="bg-indigo-600 p-2 rounded-lg text-sm hover:bg-indigo-700"><i class="fa-solid fa-plus"></i></button></div><ul class="space-y-2">${docTemplate.map(d => `<li class="bg-gray-800 p-3 rounded-lg">${d}</li>`).join('')}</ul></div><div class="glass-card p-6"><div class="flex justify-between items-center mb-4"><h4 class="text-lg font-semibold text-white">Cronjobs</h4><button class="bg-indigo-600 p-2 rounded-lg text-sm hover:bg-indigo-700"><i class="fa-solid fa-plus"></i></button></div><ul class="space-y-2">${toolUnit.map(t => `<li class="bg-gray-800 p-3 rounded-lg">${t}</li>`).join('')}</ul></div>`; }
-        function renderAutomation(automation = {}) { const { processes = [], projects = [] } = automation; const processesEl = document.getElementById('automation-processes'); if(processesEl) processesEl.innerHTML = processes.map(p => `<li class="bg-gray-800 p-2 rounded-lg cursor-pointer" onclick="toggleSublist(this)">${p.title}<ul class="sublist hidden mt-2 space-y-1 pl-4 text-sm">${(p.sublist || []).map(s => `<li class="bg-gray-900 p-1 rounded">${s}</li>`).join('')}</ul></li>`).join(''); const projectsEl = document.getElementById('automation-projects'); if(projectsEl) projectsEl.innerHTML = projects.map(p => `<li class="bg-gray-800 p-2 rounded-lg cursor-pointer" onclick="toggleSublist(this)"><div class="flex justify-between"><span>${p.title}</span> <span class="text-sm text-gray-400">Deadline: ${p.deadline}</span></div><ul class="sublist hidden mt-2 space-y-1 pl-4 text-sm">${(p.tasks || []).map(t => `<li class="bg-gray-900 p-1 rounded-lg flex items-center"><input type="checkbox" ${t.checked ? 'checked' : ''} class="mr-2 bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500"> ${t.text}</li>`).join('')}</ul></li>`).join(''); }
-        function renderControl(control = {}) { const { prompts = [], tools = [] } = control; const promptsEl = document.getElementById('control-prompts'); if(!promptsEl) return; promptsEl.innerHTML = prompts.map(p => `<li class="bg-gray-800 p-2 rounded-lg cursor-pointer" onclick="toggleSublist(this)">${p.title}<div class="sublist hidden mt-2 p-2 bg-gray-900 rounded text-sm"><textarea class="w-full bg-gray-800 rounded p-2 h-32">${p.content}</textarea><button class="bg-indigo-600 px-3 py-1 rounded mt-2 text-xs">Lưu</button></div></li>`).join(''); const toolsEl = document.getElementById('control-tools'); if(toolsEl) toolsEl.innerHTML = tools.map(t => `<li class="bg-gray-800 p-2 rounded-lg cursor-pointer" onclick="toggleSublist(this)">${t.title}<div class="sublist hidden mt-2 p-2 bg-gray-900 rounded text-sm"><p>${t.description}</p><p class="mt-2 font-bold">Config: ${t.config}</p></div></li>`).join(''); }
-        function renderUsers(users = []) { const usersTable = document.getElementById('users-table'); if(!usersTable) return; if (!users || users.length === 0) { usersTable.innerHTML = `<tr><td colspan="5" class="text-gray-400 text-center py-4">Không có dữ liệu người dùng.</td></tr>`; return; } usersTable.innerHTML = users.map(u => `<tr class="border-b border-gray-800"><td class="py-3">${u.Name}</td><td class="py-3">${u.email || ''}</td><td class="py-3">${u.role.value}</td><td class="py-3">${u.depart.value}</td><td><button class="text-indigo-400">Sửa</button></td></tr>`).join(''); }
-        function switchPage(pageId) { if (currentUser.role === 'mem' && pageId === 'intelligence') return; document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(pageId)?.classList.add('active-page'); document.querySelectorAll('.sidebar-icon').forEach(b => { b.classList.remove('active-sidebar-icon'); if (b.getAttribute('onclick').includes(`'${pageId}'`)) b.classList.add('active-sidebar-icon'); }); if (pageId === 'intelligence') { switchTab({ currentTarget: document.querySelector('#intelligence .tab-button') }, 'db'); } }
-        function switchTab(event, tabId) { document.querySelectorAll('#intelligence .tab-content').forEach(tc => tc.classList.remove('active-tab-content')); document.querySelectorAll('#intelligence .tab-button').forEach(tb => tb.classList.remove('active-tab-button')); document.getElementById(tabId)?.classList.add('active-tab-content'); event.currentTarget?.classList.add('active-tab-button'); if (tabId === 'users') renderUsers(appData.user || []); }
-        
-        function showSyllabus(event, id) { 
-            if (event && event.preventDefault) event.preventDefault(); 
-            const syllabus = (appData.class || []).find(s => s.id === id); 
-            if (syllabus) { 
-                const contentEl = document.getElementById('syllabus-content'); 
-                if(contentEl) {
-                    let finalHTML = syllabus.HTML || '<p>Nội dung đang được cập nhật.</p>';
-                    if (syllabus.baitap) {
-                        finalHTML += `
-                            <hr class="my-6 border-gray-700">
-                            <h3 class="text-lg font-semibold text-white mb-4">Bài tập Nghiệm thu</h3>
-                            <div class="bg-gray-900 p-4 rounded-lg text-gray-300">
-                                <p>${syllabus.baitap}</p>
+
+            // --- UI SETUP & NAVIGATION ---
+            function setupUIForUser() {
+                mainNav.innerHTML = '';
+                const navItems = getNavItemsForRole(appState.currentUser.role);
+                navItems.forEach(item => {
+                    const navLink = document.createElement('a');
+                    navLink.href = '#';
+                    navLink.dataset.page = item.id;
+                    navLink.className = `flex items-center px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors`;
+                    navLink.innerHTML = `<i data-lucide="${item.icon}" class="w-5 h-5 mr-3"></i> ${item.name}`;
+                    navLink.onclick = (e) => { e.preventDefault(); navigateTo(item.id); };
+                    mainNav.appendChild(navLink);
+                });
+
+                userProfile.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold mr-3">${appState.currentUser.avatar}</div>
+                        <div>
+                            <p class="font-semibold">${appState.currentUser.name}</p>
+                            <p class="text-sm text-gray-400">${appState.currentUser.role}</p>
+                        </div>
+                    </div>`;
+                document.getElementById('current-user-avatar-chat').innerText = appState.currentUser.avatar;
+                lucide.createIcons();
+            }
+            
+            function getNavItemsForRole(role) {
+                const allNavs = [
+                    { id: 'chatbot', name: 'Chatbot', icon: 'message-circle' },
+                    { id: 'tasklist', name: 'Task List', icon: 'list-checks' },
+                    { id: 'project', name: 'Project', icon: 'folder-git-2' },
+                    { id: 'class', name: 'Class', icon: 'school' },
+                    { id: 'management', name: 'Quản lý', icon: 'sliders-horizontal' }
+                ];
+                if (role === 'user') {
+                    return allNavs.filter(nav => nav.id !== 'management');
+                }
+                return allNavs;
+            }
+
+            function navigateTo(pageId) {
+                appState.currentPage = pageId;
+
+                // Create a unique threadId for the user's chat session if it doesn't exist
+                if (pageId === 'chatbot' && !appState.threadId) {
+                    appState.threadId = `thread_${appState.currentUser.id}_${Date.now()}`;
+                }
+
+                document.querySelectorAll('#main-nav a').forEach(link => {
+                    link.classList.toggle('bg-gray-900', link.dataset.page === pageId);
+                    link.classList.toggle('text-white', link.dataset.page === pageId);
+                });
+
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.toggle('active', page.id === `${pageId}-page`);
+                });
+                
+                const navItem = getNavItemsForRole(appState.currentUser.role).find(item => item.id === pageId);
+                pageTitle.textContent = navItem ? navItem.name : 'Dashboard';
+
+                renderPageContent(pageId);
+            }
+            
+            function renderPageContent(pageId) {
+                switch(pageId) {
+                    case 'class': renderClass(); break;
+                    case 'tasklist': renderTaskList(); break;
+                    case 'project': renderProjectList(); break;
+                    case 'management': renderManagementPage(); break;
+                }
+            }
+            
+            // --- PAGE RENDERING FUNCTIONS ---
+            async function handleSendMessage() {
+                const chatInput = document.getElementById('chat-input');
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                const chatMessages = document.getElementById('chat-messages');
+                const sendButton = document.getElementById('send-chat-button');
+
+                // 1. Display user's message immediately
+                chatMessages.innerHTML += `
+                     <div class="flex items-start justify-end mb-4">
+                        <div class="bg-indigo-500 text-white p-3 rounded-lg max-w-md">
+                            <p class="text-sm">${message}</p>
+                        </div>
+                         <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold ml-4 shrink-0">${appState.currentUser.avatar}</div>
+                    </div>`;
+                chatInput.value = '';
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // 2. Show typing indicator and disable input
+                sendButton.disabled = true;
+                chatInput.disabled = true;
+                const typingIndicator = document.createElement('div');
+                typingIndicator.id = 'typing-indicator';
+                typingIndicator.className = 'flex items-start mb-4';
+                typingIndicator.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">AI</div>
+                    <div class="bg-gray-200 p-3 rounded-lg">
+                        <div class="flex items-center space-x-1">
+                            <span class="h-2 w-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                            <span class="h-2 w-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                            <span class="h-2 w-2 bg-gray-500 rounded-full animate-bounce"></span>
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(typingIndicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+
+                // 3. Call the webhook
+                const webhookUrl = 'https://aps.aibm.space/webhook/corp0';
+                const payload = {
+                    task: 'chatbot',
+                    prompt: message,
+                    email: appState.currentUser.email,
+                    threadid: appState.threadId,
+                    depart: appState.currentUser.department
+                };
+
+                try {
+                    const response = await fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Webhook response was not ok: ${response.statusText}`);
+                    }
+
+                    const responseData = await response.json();
+                    const botReply = responseData[0]?.output || "Tôi không nhận được phản hồi hợp lệ.";
+
+                    // 4. Display bot's response
+                     typingIndicator.innerHTML = `
+                        <div class="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">AI</div>
+                        <div class="bg-gray-200 p-3 rounded-lg max-w-md">
+                            <p class="text-sm">${botReply}</p>
+                        </div>`;
+
+                } catch (error) {
+                    console.error('Error calling webhook:', error);
+                    typingIndicator.innerHTML = `
+                        <div class="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">AI</div>
+                        <div class="bg-red-100 border border-red-400 text-red-700 p-3 rounded-lg max-w-md">
+                            <p class="text-sm">Đã có lỗi xảy ra. Vui lòng thử lại.</p>
+                        </div>`;
+                } finally {
+                    // 5. Re-enable input
+                    sendButton.disabled = false;
+                    chatInput.disabled = false;
+                    chatInput.focus();
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+
+            function renderClass() {
+                let userClasses;
+                const { role, id, department } = appState.currentUser;
+                const { users, classes } = appState.data;
+
+                if (role === 'superadmin') {
+                    userClasses = classes;
+                } else if (role === 'admin') {
+                    const departmentUserIds = users.filter(u => u.department === department).map(u => u.id);
+                    userClasses = classes.filter(c => departmentUserIds.includes(c.userId));
+                } else { // user
+                    userClasses = classes.filter(c => c.userId === id);
+                }
+
+                const classContent = document.getElementById('class-content');
+                classContent.innerHTML = '';
+
+                if (userClasses.length === 0) {
+                    classContent.innerHTML = '<div class="bg-white p-6 rounded-lg shadow-lg"><p class="text-gray-500">Không có lớp học nào.</p></div>';
+                    return;
+                }
+                
+                const classesByUser = userClasses.reduce((acc, c) => {
+                    const user = users.find(u => u.id === c.userId);
+                    if (!user) return acc;
+                    if (!acc[c.userId]) {
+                        acc[c.userId] = { user, classes: [] };
+                    }
+                    acc[c.userId].classes.push(c);
+                    return acc;
+                }, {});
+
+                for (const userId in classesByUser) {
+                    const userData = classesByUser[userId];
+                    const user = userData.user;
+                    
+                    const userClassContainer = document.createElement('div');
+                    if (role !== 'user') {
+                         userClassContainer.innerHTML = `<h3 class="text-lg font-bold mb-2 text-gray-600">Lớp học của ${user.name}</h3>`;
+                    }
+                    
+                    userData.classes.forEach(c => {
+                        const classElement = document.createElement('div');
+                        classElement.className = 'bg-white p-6 rounded-lg shadow-lg mb-4';
+                        classElement.innerHTML = `<h4 class="text-xl font-bold mb-4">${c.name}</h4><div class="space-y-3">${
+                            c.syllabus.map(s => `
+                                <div class="syllabus-item border rounded-md">
+                                    <div class="syllabus-header flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50">
+                                        <span class="font-semibold flex items-center"><i data-lucide="book-open" class="w-5 h-5 mr-2 text-indigo-500"></i>${s.title}</span>
+                                        <i data-lucide="chevron-down" class="w-5 h-5 transition-transform chevron-icon"></i>
+                                    </div>
+                                    <div class="assignments-container hidden p-4 border-t bg-gray-50 space-y-4">
+                                        ${s.assignments.map(a => `
+                                            <div class="assignment-item">
+                                                <p class="flex items-center"><i data-lucide="clipboard-list" class="w-5 h-5 mr-2 text-green-500"></i>${a.title}</p>
+                                                <div class="mt-2 ml-7 p-3 bg-indigo-50 border border-indigo-200 rounded-md">
+                                                    <p class="text-xs font-semibold text-indigo-700 mb-1">AI Đề xuất:</p>
+                                                    <p class="text-sm text-indigo-800">${a.suggestion}</p>
+                                                </div>
+                                            </div>
+                                        `).join('') || '<p class="text-sm text-gray-500">Không có bài tập cho đề cương này.</p>'}
+                                    </div>
+                                </div>
+                            `).join('')}</div>`;
+                        userClassContainer.appendChild(classElement);
+                    });
+                    classContent.appendChild(userClassContainer);
+                }
+
+                // Old, broken click handling removed from here.
+
+                lucide.createIcons();
+            }
+            
+            function renderTaskList() {
+                let tasksToDisplay;
+                const { role, id, department } = appState.currentUser;
+                const { users, tasks } = appState.data;
+
+                if (role === 'superadmin') {
+                    tasksToDisplay = tasks;
+                } else if (role === 'admin') {
+                    const departmentUserIds = users.filter(u => u.department === department).map(u => u.id);
+                    tasksToDisplay = tasks.filter(t => departmentUserIds.includes(t.assignedTo));
+                } else { // user
+                    tasksToDisplay = tasks.filter(t => t.assignedTo === id);
+                }
+
+                ['todo', 'inprogress', 'done'].forEach(status => {
+                    const container = document.getElementById(`${status}-tasks`);
+                    container.innerHTML = '';
+                    const tasksInStatus = tasksToDisplay.filter(t => t.status === status);
+                    tasksInStatus.forEach(task => {
+                        const project = appState.data.projects.find(p => p.id === task.projectId);
+                        const assignedUser = users.find(u => u.id === task.assignedTo);
+                        container.innerHTML += `
+                            <div id="task-${task.id}" class="task-card bg-gray-50 p-3 rounded-lg border shadow-sm" draggable="true">
+                                <p class="font-semibold mb-1">${task.title}</p>
+                                <p class="text-sm text-gray-500">${project ? project.name : 'No Project'}</p>
+                                ${role !== 'user' && assignedUser ? `<div class="text-xs text-right mt-1 font-medium text-indigo-600">${assignedUser.name}</div>` : ''}
+                            </div>`;
+                    });
+                    document.getElementById(`${status}-count`).textContent = tasksInStatus.length;
+                });
+                addDragAndDropListeners();
+            }
+            
+            function renderProjectList() {
+                let projectsToDisplay;
+                const { role, id, department } = appState.currentUser;
+                const { users, projects } = appState.data;
+
+                if (role === 'superadmin') {
+                    projectsToDisplay = projects;
+                } else if (role === 'admin') {
+                    const departmentUserIds = users.filter(u => u.department === department).map(u => u.id);
+                    projectsToDisplay = projects.filter(p => p.members.some(memberId => departmentUserIds.includes(memberId)));
+                } else { // user
+                    projectsToDisplay = projects.filter(p => p.members.includes(id));
+                }
+                
+                const projectListView = document.getElementById('project-list-view');
+                projectListView.classList.remove('hidden');
+                document.getElementById('project-detail-view').classList.add('hidden');
+
+                const projectFolders = document.getElementById('project-folders');
+                projectFolders.innerHTML = '';
+
+                projectsToDisplay.forEach(project => {
+                    const folder = document.createElement('div');
+                    folder.className = 'flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow-lg text-center cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all';
+                    folder.innerHTML = `<i data-lucide="folder" class="w-16 h-16 text-yellow-500"></i><span class="mt-2 font-semibold text-gray-700">${project.name}</span>`;
+                    folder.onclick = () => renderProjectDetail(project.id);
+                    projectFolders.appendChild(folder);
+                });
+                lucide.createIcons();
+            }
+            
+            function renderProjectDetail(projectId) {
+                document.getElementById('project-list-view').classList.add('hidden');
+                const detailView = document.getElementById('project-detail-view');
+                detailView.classList.remove('hidden');
+
+                const project = appState.data.projects.find(p => p.id === projectId);
+                const projectTasks = appState.data.tasks.filter(t => t.projectId === projectId);
+                
+                detailView.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center mb-6">
+                            <button id="back-to-projects" class="mr-4 p-2 rounded-full hover:bg-gray-200"><i data-lucide="arrow-left"></i></button>
+                            <h3 class="text-2xl font-bold">${project.name}</h3>
+                        </div>
+                        
+                        <div class="border-b">
+                            <nav class="flex space-x-4" id="project-detail-tabs">
+                                <a href="#" data-tab="tasks" class="px-3 py-2 font-medium text-sm rounded-t-md border-b-2 border-indigo-500 text-indigo-600">Danh sách Task</a>
+                                <a href="#" data-tab="docs" class="px-3 py-2 font-medium text-sm rounded-t-md border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">Tài liệu</a>
+                            </nav>
+                        </div>
+
+                        <div id="project-tasks-content" class="mt-4">
+                            ${projectTasks.map(task => {
+                                const assignedUser = appState.data.users.find(u => u.id === task.assignedTo);
+                                return `
+                                <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-md">
+                                    <div>
+                                        <p>${task.title}</p>
+                                        <p class="text-xs text-gray-500">Giao cho: ${assignedUser ? assignedUser.name : 'N/A'}</p>
+                                    </div>
+                                    <span class="text-xs font-semibold px-2 py-1 rounded-full ${task.status === 'done' ? 'bg-green-100 text-green-800' : task.status === 'inprogress' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+                                        ${task.status}
+                                    </span>
+                                </div>`
+                            }).join('') || '<p class="text-gray-500 mt-4">Không có task nào.</p>'}
+                        </div>
+                        <div id="project-docs-content" class="hidden mt-4">
+                            ${project.docs.map(doc => `
+                                <div class="flex items-center p-3 hover:bg-gray-50 rounded-md">
+                                    <i data-lucide="file-text" class="w-5 h-5 mr-3 text-gray-500"></i>
+                                    <p>${doc}</p>
+                                </div>
+                            `).join('') || '<p class="text-gray-500 mt-4">Không có tài liệu nào.</p>'}
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('back-to-projects').onclick = renderProjectList;
+                
+                const tabs = document.querySelectorAll('#project-detail-tabs a');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', e => {
+                        e.preventDefault();
+                        tabs.forEach(t => {
+                            t.classList.remove('border-indigo-500', 'text-indigo-600');
+                            t.classList.add('border-transparent', 'text-gray-500');
+                        });
+                        tab.classList.add('border-indigo-500', 'text-indigo-600');
+                        
+                        document.getElementById('project-tasks-content').classList.toggle('hidden', tab.dataset.tab !== 'tasks');
+                        document.getElementById('project-docs-content').classList.toggle('hidden', tab.dataset.tab !== 'docs');
+                    });
+                });
+                
+                lucide.createIcons();
+            }
+
+            function renderManagementPage() {
+                const tabsContainer = document.getElementById('management-tabs');
+                tabsContainer.innerHTML = `
+                    <a href="#" data-tab="dashboard" class="management-tab px-3 py-3 font-medium text-sm border-b-2 border-indigo-500 text-indigo-600">Dashboard</a>
+                    <a href="#" data-tab="projects" class="management-tab px-3 py-3 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">Project</a>
+                    <a href="#" data-tab="users" class="management-tab px-3 py-3 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">User & Class</a>`;
+                
+                document.querySelectorAll('.management-tab').forEach(tab => {
+                    tab.addEventListener('click', e => {
+                        e.preventDefault();
+                        document.querySelectorAll('.management-tab').forEach(t => t.classList.remove('border-indigo-500', 'text-indigo-600'));
+                        tab.classList.add('border-indigo-500', 'text-indigo-600');
+                        renderManagementTabContent(tab.dataset.tab);
+                    });
+                });
+                renderManagementTabContent('dashboard');
+            }
+
+            function renderManagementTabContent(tabId, subView = null, data = null) {
+                const contentContainer = document.getElementById('management-content');
+                
+                if (tabId === 'dashboard') {
+                    contentContainer.innerHTML = `
+                        <h4 class="text-lg font-bold mb-4">Số liệu tổng</h4>
+                         <div class="grid grid-cols-2 gap-4 mb-8">
+                            <div class="bg-gray-100 p-4 rounded-lg"><p class="font-bold text-2xl">${appState.data.projects.length}</p><p class="text-gray-600">Tổng dự án</p></div>
+                             <div class="bg-gray-100 p-4 rounded-lg"><p class="font-bold text-2xl">${appState.data.users.length}</p><p class="text-gray-600">Tổng người dùng</p></div>
+                        </div>
+                        <h4 class="text-lg font-bold mb-4">Danh sách đề xuất</h4>
+                        <div class="space-y-4">
+                             ${appState.data.prompts.filter(p => p.status === 'đang đợi').map(p => `
+                                <div class="p-4 border rounded-lg flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">${p.type}: ${p.department}</p>
+                                        <p class="text-sm text-gray-600">"${p.prompt}"</p>
+                                    </div>
+                                    <div class="flex-shrink-0 flex space-x-2"><button class="px-3 py-1 text-xs font-semibold text-white bg-green-500 rounded-full hover:bg-green-600">Duyệt</button><button class="px-3 py-1 text-xs font-semibold text-white bg-red-500 rounded-full hover:bg-red-600">Từ chối</button></div>
+                                </div>
+                            `).join('') || '<p class="text-gray-500">Không có đề xuất nào đang chờ.</p>'}
+                        </div>`;
+                } else if (tabId === 'projects') {
+                    if (subView === 'suggest_tasks') {
+                        let pendingTasks = ['Phân tích yêu cầu & lên kế hoạch', 'Thiết kế UI/UX', 'Phát triển Frontend', 'Phát triển Backend', 'Kiểm thử (Testing)', 'Triển khai (Deployment)']
+                            .map(title => ({ title, status: 'pending' })); // pending, approved, rejected
+
+                        contentContainer.innerHTML = `
+                            <h4 class="text-lg font-bold mb-4">Duyệt Task cho Project: ${data.projectName}</h4>
+                            <div class="space-y-3 mb-4">
+                            ${pendingTasks.map((task, index) => `
+                                <div class="suggested-task-card flex items-center justify-between p-3 border rounded-lg bg-white">
+                                    <p>${task.title}</p>
+                                    <div class="task-actions flex space-x-2" data-task-index="${index}">
+                                        <button class="approve-task-btn px-3 py-1 text-xs font-semibold text-white bg-green-500 rounded-full hover:bg-green-600">Duyệt</button>
+                                        <button class="reject-task-btn px-3 py-1 text-xs font-semibold text-white bg-red-500 rounded-full hover:bg-red-600">Từ chối</button>
+                                    </div>
+                                </div>`).join('')}
+                            </div>
+                            <div class="flex space-x-3">
+                                <button id="save-project-btn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700">Lưu Project</button>
+                                <button id="cancel-project-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">Hủy</button>
                             </div>
                         `;
-                    }
-                    contentEl.innerHTML = finalHTML;
-                } 
-            } 
-            document.querySelectorAll('#syllabus-list a').forEach(el => { el.classList.remove('bg-indigo-600', 'text-white'); el.classList.add('bg-gray-800', 'hover:bg-indigo-600'); }); 
-            const targetLink = document.querySelector(`#syllabus-list a[data-syllabus-id='${id}']`); 
-            if(targetLink) { targetLink.classList.remove('bg-gray-800', 'hover:bg-indigo-600'); targetLink.classList.add('bg-indigo-600', 'text-white'); } 
-        }
+                        document.querySelectorAll('.task-actions').forEach(actions => {
+                            actions.querySelector('.approve-task-btn').onclick = () => {
+                                const index = actions.dataset.taskIndex;
+                                pendingTasks[index].status = 'approved';
+                                actions.parentElement.classList.remove('bg-red-50');
+                                actions.parentElement.classList.add('bg-green-50');
+                                actions.innerHTML = '<span class="text-sm font-semibold text-green-700">Đã duyệt</span>';
+                            };
+                            actions.querySelector('.reject-task-btn').onclick = () => {
+                                const index = actions.dataset.taskIndex;
+                                pendingTasks[index].status = 'rejected';
+                                actions.parentElement.classList.remove('bg-green-50');
+                                actions.parentElement.classList.add('bg-red-50');
+                                actions.innerHTML = '<span class="text-sm font-semibold text-red-700">Đã từ chối</span>';
+                            };
+                        });
 
-        function newConversation() { document.querySelector('#chat-log').innerHTML = `<div class="chat-bubble gemini-bubble p-4 rounded-lg"><p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p></div>`; document.getElementById('agent-prompt').value = ''; resetImageUpload(); }
-        function handleImageUpload(event) { const file = event.target.files[0]; if (!file) { resetImageUpload(); return; }; const reader = new FileReader(); reader.onloadend = () => { uploadedImageBase64 = reader.result.replace('data:', '').replace(/^.+,/, ''); document.getElementById('image-preview').src = reader.result; document.getElementById('image-preview-container').classList.remove('hidden'); }; reader.readAsDataURL(file); }
-        function resetImageUpload() { const previewContainer = document.getElementById('image-preview-container'); if(previewContainer) { uploadedImageBase64 = null; document.getElementById('image-upload').value = ''; previewContainer.classList.add('hidden'); } }
-        async function submitToGemini() { const promptTextEl = document.getElementById('agent-prompt'); const promptText = promptTextEl ? promptTextEl.value : ''; const submitBtn = document.getElementById('agent-submit-btn'); if ((!promptText && !uploadedImageBase64) || !submitBtn) return; let userMessageHTML = `<div class="chat-bubble user-bubble p-4 rounded-lg">`; if (uploadedImageBase64) userMessageHTML += `<img src="${document.getElementById('image-preview').src}" class="max-w-xs h-auto rounded-md mb-2">`; if (promptText) userMessageHTML += `<p>${promptText}</p>`; userMessageHTML += `</div>`; const chatLogEl = document.querySelector('#chat-log'); if(!chatLogEl) return; chatLogEl.innerHTML += userMessageHTML; chatLogEl.scrollTop = chatLogEl.scrollHeight; if(promptTextEl) promptTextEl.value = ''; resetImageUpload(); submitBtn.disabled = true; chatLogEl.innerHTML += `<div id="loading-bubble" class="chat-bubble gemini-bubble p-4 rounded-lg"><div class="loader"></div></div>`; chatLogEl.scrollTop = chatLogEl.scrollHeight; const parts = []; if (promptText) parts.push({ text: promptText }); if (uploadedImageBase64) parts.push({ inlineData: { mimeType: "image/jpeg", data: uploadedImageBase64 } }); const payload = { contents: [{ parts: parts }] }; try { const response = await fetch(GEMINI_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error(`API call failed with status: ${response.status}`); const result = await response.json(); const candidate = result.candidates?.[0]; const loadingBubble = document.getElementById('loading-bubble'); if (candidate && candidate.content?.parts?.[0]?.text) { const geminiResponseHTML = `<div class="chat-bubble gemini-bubble p-4 rounded-lg">${candidate.content.parts[0].text.replace(/\n/g, '<br>')}</div>`; if(loadingBubble) loadingBubble.remove(); chatLogEl.innerHTML += geminiResponseHTML; } else { throw new Error("Invalid response structure from API."); } } catch (error) { console.error("Error calling Gemini API:", error); const errorHTML = `<div class="chat-bubble gemini-bubble p-4 rounded-lg text-red-400"><p>Lỗi: ${error.message}</p></div>`; const loadingBubble = document.getElementById('loading-bubble'); if(loadingBubble) loadingBubble.remove(); chatLogEl.innerHTML += errorHTML; } finally { submitBtn.disabled = false; chatLogEl.scrollTop = chatLogEl.scrollHeight; } }
-        function openModal(id) { const modal = document.getElementById(id); if(modal) modal.style.display = 'block'; }
-        function closeModal(id) { const modal = document.getElementById(id); if(modal) modal.style.display = 'none'; }
-        function toggleSublist(element) { const sublist = element.querySelector('.sublist'); if(sublist) sublist.classList.toggle('hidden'); }
+                        document.getElementById('save-project-btn').onclick = () => {
+                            appState.createdProjects.push({id: Date.now(), name: data.projectName, tasks: pendingTasks });
+                            renderManagementTabContent('projects');
+                        };
+                        document.getElementById('cancel-project-btn').onclick = () => renderManagementTabContent('projects');
+
+                    } else if (subView === 'view_project') {
+                        const project = appState.createdProjects.find(p => p.id === data.projectId);
+                        contentContainer.innerHTML = `
+                            <div class="flex items-center mb-4">
+                                <button id="back-to-mng-projects" class="mr-4 p-2 rounded-full hover:bg-gray-200"><i data-lucide="arrow-left"></i></button>
+                                <h4 class="text-lg font-bold">Tasks cho Project: ${project.name}</h4>
+                            </div>
+                            <div class="space-y-2" id="project-task-list-container">
+                            ${project.tasks.map((task, index) => {
+                                const statusClass = task.status === 'approved' ? 'bg-green-50' : task.status === 'rejected' ? 'bg-red-50' : 'bg-white';
+                                return `<div class="project-task-item flex justify-between items-center p-3 rounded-md border ${statusClass}" data-task-index="${index}">
+                                    <span>${task.title}</span>
+                                    <div class="task-actions flex space-x-2">
+                                        <button class="approve-task-btn px-3 py-1 text-xs font-semibold text-white bg-green-500 rounded-full hover:bg-green-600">Duyệt</button>
+                                        <button class="reject-task-btn px-3 py-1 text-xs font-semibold text-white bg-red-500 rounded-full hover:bg-red-600">Từ chối</button>
+                                    </div>
+                                </div>`;
+                            }).join('') || '<p>Không có task nào.</p>'}
+                            </div>
+                        `;
+                        document.getElementById('back-to-mng-projects').onclick = () => renderManagementTabContent('projects');
+
+                        document.getElementById('project-task-list-container').addEventListener('click', e => {
+                            const approveBtn = e.target.closest('.approve-task-btn');
+                            const rejectBtn = e.target.closest('.reject-task-btn');
+
+                            if (!approveBtn && !rejectBtn) return;
+                            
+                            const taskItem = e.target.closest('.project-task-item');
+                            const taskIndex = parseInt(taskItem.dataset.taskIndex);
+
+                            if (approveBtn) {
+                                project.tasks[taskIndex].status = 'approved';
+                                taskItem.className = 'project-task-item flex justify-between items-center p-3 rounded-md border bg-green-50';
+                            } else if (rejectBtn) {
+                                project.tasks[taskIndex].status = 'rejected';
+                                taskItem.className = 'project-task-item flex justify-between items-center p-3 rounded-md border bg-red-50';
+                            }
+                        });
+
+                        lucide.createIcons();
+                    } else {
+                         contentContainer.innerHTML = `
+                            <h4 class="text-lg font-bold mb-4">Tạo project mới</h4>
+                            <form id="create-project-form" class="space-y-3 mb-6 p-4 border rounded-lg bg-gray-50">
+                                <input type="text" id="project-name-input" placeholder="Tên project" class="w-full px-3 py-2 border rounded-md" required>
+                                <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700">Tạo & Duyệt Task</button>
+                            </form>
+                             <h4 class="text-lg font-bold mb-4">Danh sách project đã tạo</h4>
+                             <div class="space-y-2">
+                                ${appState.createdProjects.map(p => `
+                                    <div class="flex items-center p-3 cursor-pointer hover:bg-gray-100 rounded-md border" data-project-id="${p.id}">
+                                        <i data-lucide="folder-check" class="w-5 h-5 mr-3 text-green-600"></i>
+                                        <span>${p.name}</span>
+                                    </div>
+                                `).join('') || '<p class="text-gray-500">Chưa có project nào được tạo.</p>'}
+                             </div>
+                        `;
+                        document.getElementById('create-project-form').addEventListener('submit', e => {
+                            e.preventDefault();
+                            const projectName = document.getElementById('project-name-input').value;
+                            if (projectName) renderManagementTabContent('projects', 'suggest_tasks', { projectName });
+                        });
+                        document.querySelectorAll('[data-project-id]').forEach(item => {
+                            item.onclick = () => {
+                                const projectId = parseInt(item.dataset.projectId);
+                                renderManagementTabContent('projects', 'view_project', { projectId });
+                            };
+                        });
+                         lucide.createIcons();
+                    }
+
+                } else if (tabId === 'users') {
+                    let usersToDisplay = appState.currentUser.role === 'superadmin' 
+                        ? appState.data.users 
+                        : appState.data.users.filter(u => u.department === appState.currentUser.department);
+                    
+                    contentContainer.innerHTML = `<h4 class="text-lg font-bold mb-4">Danh sách User</h4><div id="user-list-management" class="space-y-2">
+                        ${usersToDisplay.map(user => `
+                             <div class="user-item border rounded-lg">
+                                <div class="user-item-header flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50">
+                                    <div class="flex items-center">
+                                         <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center font-bold mr-3">${user.avatar}</div>
+                                         <div><p class="font-semibold">${user.name}</p><p class="text-sm text-gray-500">${user.department} - ${user.role}</p></div>
+                                    </div><i data-lucide="chevron-down" class="w-5 h-5 transition-transform chevron-icon"></i>
+                                </div>
+                                <div class="user-classes-list hidden p-4 border-t bg-gray-50">
+                                    <h5 class="font-semibold mb-2">Danh sách lớp học:</h5>
+                                    ${appState.data.classes.filter(c => c.userId === user.id).map(c => `<p class="text-sm pl-2">- ${c.name}</p>`).join('') || '<p class="text-sm text-gray-500 pl-2">Chưa tham gia lớp nào.</p>'}
+                                </div></div>`).join('')}</div>`;
+
+                    // Old, broken click handling removed from here.
+
+                     lucide.createIcons();
+                }
+            }
+            
+            // --- KANBAN DRAG & DROP ---
+            function addDragAndDropListeners() {
+                const tasks = document.querySelectorAll('.task-card');
+                const columns = document.querySelectorAll('.kanban-column');
+
+                tasks.forEach(task => {
+                    task.addEventListener('dragstart', () => { appState.draggedTask = task; setTimeout(() => task.classList.add('opacity-50'), 0); });
+                    task.addEventListener('dragend', () => {
+                        if (!appState.draggedTask) return;
+                        appState.draggedTask.classList.remove('opacity-50');
+                        const taskId = parseInt(appState.draggedTask.id.replace('task-', ''));
+                        const newStatus = appState.draggedTask.parentElement.id.replace('-tasks', '');
+                        const taskToUpdate = appState.data.tasks.find(t => t.id === taskId);
+                        if (taskToUpdate) taskToUpdate.status = newStatus;
+                        appState.draggedTask = null;
+                        renderTaskList(); // Re-render counts
+                    });
+                });
+
+                columns.forEach(column => {
+                    column.addEventListener('dragover', e => { e.preventDefault(); if (!appState.draggedTask) return; const afterElement = getDragAfterElement(column, e.clientY); if (afterElement == null) { column.appendChild(appState.draggedTask); } else { column.insertBefore(appState.draggedTask, afterElement); } });
+                });
+            }
+
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.task-card:not(.opacity-50)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            // --- START THE APP ---
+            init();
+        });
     </script>
 </body>
 </html>
-
 
 
