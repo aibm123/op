@@ -35,13 +35,16 @@
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
         }
-         /* Fix for chat input on mobile */
+         /* Definitive fix for mobile keyboard and click issues */
         html, body {
             height: 100%;
-            /* overflow: hidden; */ /* Removed to fix mobile keyboard and click issues */
+            overflow: hidden; /* Prevent body scrolling */
         }
         #app {
             height: 100%;
+        }
+        #content-area {
+            -webkit-overflow-scrolling: touch; /* Improves scrolling on iOS */
         }
     </style>
 </head>
@@ -76,7 +79,7 @@
                 </div>
                 <div>
                     <h3 class="font-bold mb-2">3 Cấp Tài Khoản Cho App OP:</h3>
-                    <ul class="inline-block">
+                    <ul class="inline-block text-left">
                         <li>Superadmin: superadmin@gmail.com / 123</li>
                         <li>Admin: admin@gmail.com / 123</li>
                         <li>User: user@gmail.com / 123</li>
@@ -122,7 +125,7 @@
                 </div>
                  <div>
                     <h3 class="font-bold mb-2">Tài khoản admin & user chung:</h3>
-                     <ul class="inline-block">
+                     <ul class="inline-block text-left">
                         <li>admin@gmail.com / 123</li>
                         <li>user@gmail.com / 123</li>
                     </ul>
@@ -137,7 +140,7 @@
     </div>
 
     <!-- Main App -->
-    <div id="app" class="hidden h-screen w-screen flex">
+    <div id="app" class="hidden h-full w-full flex">
         <!-- Sidebar -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-gray-800 text-white flex flex-col transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
@@ -156,7 +159,7 @@
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col overflow-hidden">
+        <main class="flex-1 flex flex-col">
             <header class="h-20 bg-white shadow-md flex items-center justify-between px-6 flex-shrink-0">
                 <!-- Hamburger Menu Button -->
                 <button id="menu-toggle-button" class="p-2 -ml-2 rounded-md text-gray-600 md:hidden">
@@ -1004,7 +1007,7 @@
 
                         document.getElementById('project-task-list-container').addEventListener('click', e => {
                             const approveBtn = e.target.closest('.approve-task-btn');
-                            const rejectBtn = e.target.closest('.reject-task-btn');
+                            const rejectBtn = e.target.closest('.reject-btn');
 
                             if (!approveBtn && !rejectBtn) return;
                             
@@ -1117,5 +1120,4 @@
     </script>
 </body>
 </html>
-
 
