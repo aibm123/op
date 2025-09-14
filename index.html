@@ -10,6 +10,7 @@
         /* Custom styles */
         body {
             font-family: 'Inter', sans-serif;
+            overscroll-behavior-y: none; /* Prevents pull-to-refresh issues on mobile */
         }
         @import url('https://rsms.me/inter/inter.css');
 
@@ -33,6 +34,14 @@
         .no-scrollbar {
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
+        }
+         /* Fix for chat input on mobile */
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+        #app {
+            height: 100%;
         }
     </style>
 </head>
@@ -128,14 +137,14 @@
     </div>
 
     <!-- Main App -->
-    <div id="app" class="hidden h-screen flex relative">
+    <div id="app" class="hidden h-screen w-screen flex relative overflow-hidden">
         <!-- Sidebar -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-gray-800 text-white flex flex-col transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
                  <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H3a4 4 0 00-4 4v2m11-6V5a4 4 0 00-4-4H6a4 4 0 00-4 4v6m18 4v-2a4 4 0 00-4-4h-2a4 4 0 00-4 4v2m11-6V9a4 4 0 00-4-4h-2a4 4 0 00-4 4v2"></path></svg>
                 <h1 class="text-2xl font-bold ml-2">AI Operation</h1>
             </div>
-            <nav id="main-nav" class="flex-1 px-4 py-4 space-y-2">
+            <nav id="main-nav" class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
                 <!-- Nav items will be populated by JS -->
             </nav>
             <div id="user-profile" class="p-4 border-t border-gray-700">
@@ -148,38 +157,38 @@
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-hidden">
-            <header class="h-20 bg-white shadow-md flex items-center justify-between px-6">
+            <header class="h-20 bg-white shadow-md flex items-center justify-between px-6 flex-shrink-0">
                 <!-- Hamburger Menu Button -->
                 <button id="menu-toggle-button" class="p-2 -ml-2 rounded-md text-gray-600 md:hidden">
                     <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
-                <h2 id="page-title" class="text-2xl font-bold text-gray-700"></h2>
-                <button id="logout-button" class="flex items-center text-sm font-medium text-gray-600 hover:text-indigo-600">
+                <h2 id="page-title" class="text-2xl font-bold text-gray-700 truncate"></h2>
+                <button id="logout-button" class="flex items-center text-sm font-medium text-gray-600 hover:text-indigo-600 flex-shrink-0">
                     <i data-lucide="log-out" class="w-5 h-5 mr-2"></i>
-                    Đăng xuất
+                    <span>Đăng xuất</span>
                 </button>
             </header>
-            <div id="content-area" class="flex-1 p-6 overflow-y-auto bg-gray-100">
+            <div id="content-area" class="flex-1 p-4 sm:p-6 overflow-y-auto bg-gray-100">
 
                 <!-- Chatbot Page -->
                 <div id="chatbot-page" class="page h-full">
-                    <div class="h-full flex flex-col bg-white rounded-lg shadow-lg">
-                        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto">
+                    <div class="h-full flex flex-col bg-white rounded-lg shadow-lg overflow-hidden">
+                        <div id="chat-messages" class="flex-1 p-4 sm:p-6 overflow-y-auto">
                             <!-- Chat messages -->
                              <div class="flex items-start mb-4">
                                 <div class="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">AI</div>
-                                <div class="bg-gray-200 p-3 rounded-lg max-w-md">
+                                <div class="bg-gray-200 p-3 rounded-lg max-w-[80%]">
                                     <p class="text-sm">Xin chào! Tôi có thể giúp gì cho bạn hôm nay?</p>
                                 </div>
                             </div>
                              <div class="flex items-start justify-end mb-4">
-                                <div class="bg-indigo-500 text-white p-3 rounded-lg max-w-md">
+                                <div class="bg-indigo-500 text-white p-3 rounded-lg max-w-[80%]">
                                     <p class="text-sm">Tôi cần thông tin về dự án "Website Redesign".</p>
                                 </div>
                                  <div id="current-user-avatar-chat" class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold ml-4 shrink-0"></div>
                             </div>
                         </div>
-                        <div class="p-4 border-t">
+                        <div class="p-4 border-t bg-white flex-shrink-0">
                             <div class="flex items-center bg-gray-100 rounded-lg">
                                 <input type="text" id="chat-input" placeholder="Nhập tin nhắn của bạn..." class="w-full bg-transparent p-3 focus:outline-none">
                                 <button id="send-chat-button" class="p-3 text-indigo-500 hover:text-indigo-700">
@@ -199,7 +208,7 @@
 
                 <!-- Tasklist Page -->
                 <div id="tasklist-page" class="page">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                         <!-- To Do -->
                         <div id="todo-col" class="bg-white rounded-lg shadow-lg">
                             <h3 class="text-lg font-bold p-4 border-b flex items-center justify-between">
@@ -230,7 +239,7 @@
                 <!-- Project Page -->
                 <div id="project-page" class="page">
                     <div id="project-list-view">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="project-folders">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" id="project-folders">
                             <!-- Project folders will be populated here -->
                         </div>
                     </div>
@@ -242,7 +251,7 @@
                 <!-- Management Page (Admin/Superadmin) -->
                 <div id="management-page" class="page">
                     <div class="bg-white rounded-lg shadow-lg">
-                        <div class="border-b border-gray-200">
+                        <div class="border-b border-gray-200 overflow-x-auto no-scrollbar">
                             <nav id="management-tabs" class="-mb-px flex space-x-6 px-6" aria-label="Tabs">
                                 <!-- Management tabs will be populated here -->
                             </nav>
@@ -316,17 +325,12 @@
                     if (e.key === 'Enter') handleSendMessage();
                 });
 
-                // --- EVENT DELEGATION FOR DYNAMIC CONTENT (DEFINITIVE FIX) ---
-                // This single, powerful listener is attached to the whole document body.
-                // It will catch clicks on any syllabus or user item, no matter when they are created or re-rendered.
-                // This is the correct and final solution.
                 document.body.addEventListener('click', (e) => {
-                    // For Class Page syllabus items
                     const syllabusHeader = e.target.closest('.syllabus-header');
                     if (syllabusHeader) {
                         e.preventDefault();
                         const assignmentsContainer = syllabusHeader.nextElementSibling;
-                        const icon = syllabusHeader.querySelector('.chevron-icon'); // SỬA: Tìm icon bằng class cố định
+                        const icon = syllabusHeader.querySelector('.chevron-icon');
                         if (assignmentsContainer && icon) {
                             assignmentsContainer.classList.toggle('hidden');
                             icon.classList.toggle('rotate-180');
@@ -334,12 +338,11 @@
                         return;
                     }
 
-                    // For Management > User & Class items
                     const userItemHeader = e.target.closest('.user-item-header');
                     if (userItemHeader) {
                         e.preventDefault();
                         const classListDiv = userItemHeader.nextElementSibling;
-                        const icon = userItemHeader.querySelector('.chevron-icon'); // SỬA: Tìm icon bằng class cố định
+                        const icon = userItemHeader.querySelector('.chevron-icon');
                         if (classListDiv && icon) {
                             classListDiv.classList.toggle('hidden');
                             icon.classList.toggle('rotate-180');
@@ -612,8 +615,8 @@
                 // 1. Display user's message immediately
                 chatMessages.innerHTML += `
                      <div class="flex items-start justify-end mb-4">
-                        <div class="bg-indigo-500 text-white p-3 rounded-lg max-w-md">
-                            <p class="text-sm">${message}</p>
+                        <div class="bg-indigo-500 text-white p-3 rounded-lg max-w-[80%]">
+                            <p class="text-sm break-words">${message}</p>
                         </div>
                          <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold ml-4 shrink-0">${appState.currentUser.avatar}</div>
                     </div>`;
@@ -669,16 +672,16 @@
                     // 4. Display bot's response
                      typingIndicator.innerHTML = `
                         <div class="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">AI</div>
-                        <div class="bg-gray-200 p-3 rounded-lg max-w-md">
-                            <p class="text-sm">${botReply}</p>
+                        <div class="bg-gray-200 p-3 rounded-lg max-w-[80%]">
+                            <p class="text-sm break-words">${botReply}</p>
                         </div>`;
 
                 } catch (error) {
                     console.error('Error calling webhook:', error);
                     typingIndicator.innerHTML = `
                         <div class="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">AI</div>
-                        <div class="bg-red-100 border border-red-400 text-red-700 p-3 rounded-lg max-w-md">
-                            <p class="text-sm">Đã có lỗi xảy ra. Vui lòng thử lại.</p>
+                        <div class="bg-red-100 border border-red-400 text-red-700 p-3 rounded-lg max-w-[80%]">
+                            <p class="text-sm break-words">Đã có lỗi xảy ra. Vui lòng thử lại.</p>
                         </div>`;
                 } finally {
                     // 5. Re-enable input
@@ -757,9 +760,6 @@
                     });
                     classContent.appendChild(userClassContainer);
                 }
-
-                // Old, broken click handling removed from here.
-
                 lucide.createIcons();
             }
             
@@ -898,9 +898,9 @@
             function renderManagementPage() {
                 const tabsContainer = document.getElementById('management-tabs');
                 tabsContainer.innerHTML = `
-                    <a href="#" data-tab="dashboard" class="management-tab px-3 py-3 font-medium text-sm border-b-2 border-indigo-500 text-indigo-600">Dashboard</a>
-                    <a href="#" data-tab="projects" class="management-tab px-3 py-3 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">Project</a>
-                    <a href="#" data-tab="users" class="management-tab px-3 py-3 font-medium text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">User & Class</a>`;
+                    <a href="#" data-tab="dashboard" class="management-tab px-3 py-3 font-medium text-sm whitespace-nowrap border-b-2 border-indigo-500 text-indigo-600">Dashboard</a>
+                    <a href="#" data-tab="projects" class="management-tab px-3 py-3 font-medium text-sm whitespace-nowrap border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">Project</a>
+                    <a href="#" data-tab="users" class="management-tab px-3 py-3 font-medium text-sm whitespace-nowrap border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">User & Class</a>`;
                 
                 document.querySelectorAll('.management-tab').forEach(tab => {
                     tab.addEventListener('click', e => {
@@ -926,8 +926,8 @@
                         <h4 class="text-lg font-bold mb-4">Danh sách đề xuất</h4>
                         <div class="space-y-4">
                              ${appState.data.prompts.filter(p => p.status === 'đang đợi').map(p => `
-                                <div class="p-4 border rounded-lg flex items-center justify-between">
-                                    <div>
+                                <div class="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                                    <div class="mb-2 sm:mb-0">
                                         <p class="font-semibold">${p.type}: ${p.department}</p>
                                         <p class="text-sm text-gray-600">"${p.prompt}"</p>
                                     </div>
@@ -1070,9 +1070,6 @@
                                     <h5 class="font-semibold mb-2">Danh sách lớp học:</h5>
                                     ${appState.data.classes.filter(c => c.userId === user.id).map(c => `<p class="text-sm pl-2">- ${c.name}</p>`).join('') || '<p class="text-sm text-gray-500 pl-2">Chưa tham gia lớp nào.</p>'}
                                 </div></div>`).join('')}</div>`;
-
-                    // Old, broken click handling removed from here.
-
                      lucide.createIcons();
                 }
             }
@@ -1120,7 +1117,4 @@
     </script>
 </body>
 </html>
-
-
-
 
